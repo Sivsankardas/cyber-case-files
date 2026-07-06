@@ -1,0 +1,41 @@
+name: Post to Cyber Case Files Telegram Channel
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+    - cron: "30 8 * * *"
+    - cron: "30 13 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore posted-history database
+        uses: actions/cache@v4
+        with:
+          path: posted_history.db
+          key: posted-history-db
+
+      - name: Post one message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        run: python main.py
+
+      - name: Save posted-history database
+        uses: actions/cache/save@v4
+        with:
+          path: posted_history.db
+          key: posted-history-db-${{ github.run_id }}
