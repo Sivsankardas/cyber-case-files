@@ -1,11 +1,13 @@
 """
-Zero-cost content generator — pure Python string templates, NO API calls, NO cost.
+Live-only content generator. Every post is built from data fetched at
+run time — no pre-written cases, no static examples. Templates below only
+format the live data; they don't invent content.
 
-Historical cases: fully bilingual, pre-written (see sources.py) -> just formatted.
-Fresh RSS news: title/summary come from the feed in English. Full free machine
-translation isn't reliable enough to trust unattended for factual news text, so
-the dynamic news portion stays in English; the wrapper text and the tip are
-bilingual (pre-written). This keeps everything 100% free with zero hallucination risk.
+Note on language: since the underlying data (CVE descriptions, news
+headlines, bug bounty report titles) is fetched live and must stay factually
+exact, it's kept in English with the source link included. Auto-translating
+live technical text isn't reliable enough to trust unattended, so only the
+wrapper labels are bilingual. This keeps the content 100% accurate to source.
 """
 import re
 from config import HASHTAGS, CHANNEL_HANDLE
@@ -16,90 +18,49 @@ def _strip_html(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def generate_case_file_post(case: dict, case_number: int) -> str:
-    en, hi = case["en"], case["hi"]
-    return f"""🗂 *CASE FILE #{case_number:03d}*
-🎯 CASE: {case['title']}
-📅 YEAR: {case['year']}
-
-🔍 *What Happened*
-{en['what']}
-
-⚙️ *The Method*
-{en['method']}
-
-💥 *The Impact*
-{en['impact']}
-
-🛡 *The Lesson*
-{en['lesson']}
-
-———
-
-🔍 *क्या हुआ*
-{hi['what']}
-
-⚙️ *तरीका*
-{hi['method']}
-
-💥 *असर*
-{hi['impact']}
-
-🛡 *सबक*
-{hi['lesson']}
-
-{HASHTAGS} {CHANNEL_HANDLE}"""
-
-
-def generate_bounty_tip_post(tip: dict) -> str:
-    return f"""🐞 *BUG BOUNTY TIP*
-🏷 Category: {tip['category']}
-
-💡 {tip['en_tip']}
-
-🖥 `{tip['command']}`
-
-⚠️ _Only test on systems you're authorized for — bug bounty scope, labs, or your own infra._
-
-———
-
-🐞 *बग बाउंटी टिप*
-🏷 श्रेणी: {tip['category']}
-
-💡 {tip['hi_tip']}
-
-🖥 `{tip['command']}`
-
-⚠️ _सिर्फ authorized systems पर ही टेस्ट करें — bug bounty scope, labs, या अपने खुद के infra पर।_
-
-{HASHTAGS} #BugBounty #EthicalHacking {CHANNEL_HANDLE}"""
-
-
-def generate_news_flash_post(news_item: dict, tip: dict) -> str:
+def generate_news_flash_post(news_item: dict) -> str:
     title = news_item.get("title", "").strip()
     link = news_item.get("link", "").strip()
-    summary = _strip_html(news_item.get("summary", ""))[:400]
+    summary = _strip_html(news_item.get("summary", ""))[:500]
 
-    return f"""🚨 *CYBER NEWS FLASH*
+    return f"""🚨 *CYBER NEWS FLASH* / *साइबर न्यूज़ फ्लैश*
 
 *{title}*
 {summary}
 
 🔗 {link}
 
-💡 *Security Tip of the Day:*
-{tip['en']}
-
-———
-
-🚨 *साइबर न्यूज़ फ्लैश*
-
-*{title}*
-(अंग्रेज़ी सोर्स से — नीचे लिंक देखें)
-
-🔗 {link}
-
-💡 *आज की सुरक्षा टिप:*
-{tip['hi']}
-
 {HASHTAGS} {CHANNEL_HANDLE}"""
+
+
+def generate_cve_alert_post(cve: dict) -> str:
+    severity_emoji = {
+        "CRITICAL": "🔴",
+        "HIGH": "🟠",
+        "MEDIUM": "🟡",
+        "LOW": "🟢",
+    }.get(str(cve.get("severity", "")).upper(), "⚪")
+
+    return f"""🛑 *LIVE CVE ALERT* / *लाइव CVE अलर्ट*
+
+🆔 {cve['cve_id']}
+{severity_emoji} Severity: {cve['severity']} (CVSS {cve['score']})
+
+📋 {cve['description']}
+
+🔗 {cve['link']}
+
+{HASHTAGS} #CVE #Vulnerability {CHANNEL_HANDLE}"""
+
+
+def generate_bounty_disclosure_post(report: dict) -> str:
+    return f"""🐞 *LIVE BUG BOUNTY DISCLOSURE* / *लाइव बग बाउंटी डिस्क्लोज़र*
+
+*{report['title']}*
+{report['summary']}
+
+🔗 {report['link']}
+
+⚠️ Real disclosed report from a public bug bounty program — for learning, not replication without authorization.
+
+{HASHTAGS} #BugBounty #EthicalHacking {CHANNEL_HANDLE}"""
