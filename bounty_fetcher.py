@@ -1,8 +1,3 @@
-"""
-Pulls real, publicly disclosed bug bounty reports from HackerOne's Hacktivity
-RSS feed. These are actual disclosed vulnerability reports from real bug
-bounty programs — live data, not pre-written examples.
-"""
 import feedparser
 import random
 import re
@@ -17,10 +12,6 @@ def _strip_html(text: str) -> str:
 
 
 def fetch_recent_disclosure():
-    """
-    Returns dict {id, title, link, summary} for a recently disclosed public
-    bug bounty report, or None if feed is unreachable or nothing new.
-    """
     try:
         parsed = feedparser.parse(HACKERONE_FEED)
     except Exception as e:
