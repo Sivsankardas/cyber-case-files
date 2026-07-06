@@ -1,14 +1,3 @@
-"""
-Live-only content generator. Every post is built from data fetched at
-run time — no pre-written cases, no static examples. Templates below only
-format the live data; they don't invent content.
-
-Note on language: since the underlying data (CVE descriptions, news
-headlines, bug bounty report titles) is fetched live and must stay factually
-exact, it's kept in English with the source link included. Auto-translating
-live technical text isn't reliable enough to trust unattended, so only the
-wrapper labels are bilingual. This keeps the content 100% accurate to source.
-"""
 import re
 from config import HASHTAGS, CHANNEL_HANDLE
 
