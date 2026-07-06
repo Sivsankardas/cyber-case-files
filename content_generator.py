@@ -8,10 +8,7 @@ the dynamic news portion stays in English; the wrapper text and the tip are
 bilingual (pre-written). This keeps everything 100% free with zero hallucination risk.
 """
 import re
-import itertools
 from config import HASHTAGS, CHANNEL_HANDLE
-
-_case_counter = itertools.count(1)
 
 
 def _strip_html(text: str) -> str:
@@ -19,10 +16,9 @@ def _strip_html(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def generate_case_file_post(case: dict) -> str:
-    num = next(_case_counter)
+def generate_case_file_post(case: dict, case_number: int) -> str:
     en, hi = case["en"], case["hi"]
-    return f"""🗂 *CASE FILE #{num:03d}*
+    return f"""🗂 *CASE FILE #{case_number:03d}*
 🎯 CASE: {case['title']}
 📅 YEAR: {case['year']}
 
