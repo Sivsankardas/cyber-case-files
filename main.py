@@ -1,65 +1,75 @@
 """
-Cyber Case Files — single-run poster.
+Cyber Case Files — LIVE-ONLY poster.
 
-Designed to be triggered by GitHub Actions on a cron schedule (100% free for
-public repos, and free for private repos within the monthly minutes quota).
-Each run posts exactly ONE message, then exits.
+Every run fetches fresh, real data at that moment:
+  - "news"   -> live RSS from cybersecurity news outlets
+  - "cve"    -> live recently-published CVEs from NVD's public API
+  - "bounty" -> live disclosed reports from HackerOne's public Hacktivity feed
 
-Format alternates by calendar day:
-  - even days -> "case_file" (bilingual historical dossier)
-  - odd days  -> "news_flash" (fresh RSS news + bilingual tip)
-Falls back to a historical case if RSS feeds are unreachable/dry.
+No pre-written or example content is ever posted. Rotates by day-of-year,
+and if the primary source for the day is unreachable or has nothing new,
+falls back to trying the other two live sources in order — it will only
+skip posting entirely if ALL THREE live sources fail (rare, but possible
+if feeds are down or network issues occur).
 """
 import datetime
 
-from sources import HISTORICAL_CASES, SECURITY_TIPS, BUG_BOUNTY_TIPS
 from news_fetcher import fetch_fresh_news_item
-from content_generator import generate_case_file_post, generate_news_flash_post, generate_bounty_tip_post
+from cve_fetcher import fetch_recent_cve
+from bounty_fetcher import fetch_recent_disclosure
+from content_generator import (
+    generate_news_flash_post,
+    generate_cve_alert_post,
+    generate_bounty_disclosure_post,
+)
 from telegram_poster import post_to_telegram
-from storage import mark_posted, next_counter_value
+from storage import mark_posted
 
 
-def pick_historical_case():
-    idx = next_counter_value("case_file_index")
-    case_number = idx + 1
-    return HISTORICAL_CASES[idx % len(HISTORICAL_CASES)], case_number
+def try_news():
+    item = fetch_fresh_news_item()
+    if not item:
+        return None
+    mark_posted(item["id"], item["title"])
+    return generate_news_flash_post(item)
 
 
-def pick_tip():
-    idx = next_counter_value("tip_index")
-    return SECURITY_TIPS[idx % len(SECURITY_TIPS)]
+def try_cve():
+    cve = fetch_recent_cve()
+    if not cve:
+        return None
+    mark_posted(cve["id"], cve["cve_id"])
+    return generate_cve_alert_post(cve)
 
 
-def pick_bounty_tip():
-    idx = next_counter_value("bounty_tip_index")
-    return BUG_BOUNTY_TIPS[idx % len(BUG_BOUNTY_TIPS)]
+def try_bounty():
+    report = fetch_recent_disclosure()
+    if not report:
+        return None
+    mark_posted(report["id"], report["title"])
+    return generate_bounty_disclosure_post(report)
 
 
 def run_once():
-    # 3-way rotation: day 0 -> case file, day 1 -> news flash, day 2 -> bounty tip
     day_of_year = datetime.date.today().timetuple().tm_yday
-    fmt = ["case_file", "news_flash", "bounty_tip"][day_of_year % 3]
-    print(f"[{datetime.datetime.now()}] Running — format: {fmt}")
+    order_variants = [
+        [try_news, try_cve, try_bounty],
+        [try_cve, try_bounty, try_news],
+        [try_bounty, try_news, try_cve],
+    ]
+    order = order_variants[day_of_year % 3]
+    names = {try_news: "news", try_cve: "cve", try_bounty: "bounty"}
 
-    if fmt == "case_file":
-        case, case_number = pick_historical_case()
-        post_text = generate_case_file_post(case, case_number)
-    elif fmt == "bounty_tip":
-        tip = pick_bounty_tip()
-        post_text = generate_bounty_tip_post(tip)
-    else:
-        news = fetch_fresh_news_item()
-        tip = pick_tip()
-        if news:
-            post_text = generate_news_flash_post(news, tip)
-            mark_posted(news["id"], news["title"])
-        else:
-            print("No fresh news available, falling back to historical case.")
-            case, case_number = pick_historical_case()
-            post_text = generate_case_file_post(case, case_number)
+    print(f"[{datetime.datetime.now()}] Today's primary source: {names[order[0]]}")
 
-    post_to_telegram(post_text)
-    print("✅ Posted successfully.")
+    for fn in order:
+        post_text = fn()
+        if post_text:
+            post_to_telegram(post_text)
+            print(f"✅ Posted successfully using live source: {names[fn]}")
+            return
+
+    print("⚠️ All three live sources returned nothing new or were unreachable. Skipping this run.")
 
 
 if __name__ == "__main__":
