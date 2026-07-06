@@ -1,8 +1,3 @@
-"""
-Pulls real, recently-published CVEs directly from the NVD (National
-Vulnerability Database) public API — no API key required for this volume.
-This is live government vulnerability data, not pre-written content.
-"""
 import requests
 import random
 from datetime import datetime, timedelta, timezone
@@ -12,10 +7,6 @@ NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
 
 def fetch_recent_cve():
-    """
-    Fetch CVEs published in the last 7 days, return one unposted one at random.
-    Returns dict {id, cve_id, description, severity, score, link} or None.
-    """
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=7)
 
@@ -51,7 +42,6 @@ def fetch_recent_cve():
         if not description:
             continue
 
-        # Try CVSS v3.1, then v3.0, then v2 for severity/score
         metrics = cve.get("metrics", {})
         severity, score = "Unknown", "N/A"
         for key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
