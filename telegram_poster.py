@@ -4,7 +4,6 @@ from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL_ID
 
 def post_to_telegram(text: str):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    # Telegram hard limit is 4096 chars per message; trim safely if needed.
     if len(text) > 4090:
         text = text[:4080] + "\n…(trimmed)"
 
