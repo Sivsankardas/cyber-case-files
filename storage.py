@@ -12,34 +12,7 @@ def _connect():
             posted_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS counters (
-            name TEXT PRIMARY KEY,
-            value INTEGER NOT NULL DEFAULT 0
-        )
-    """)
     return conn
-
-
-def next_counter_value(name: str) -> int:
-    """
-    Returns the next value for a named counter (starting at 0, incrementing
-    every call) and persists it. Used to rotate through historical cases and
-    tips in order, without repeats, regardless of how many times the script
-    runs in a day (manual test runs included).
-    """
-    conn = _connect()
-    cur = conn.execute("SELECT value FROM counters WHERE name = ?", (name,))
-    row = cur.fetchone()
-    current = row[0] if row else 0
-    conn.execute(
-        "INSERT INTO counters (name, value) VALUES (?, ?) "
-        "ON CONFLICT(name) DO UPDATE SET value = ?",
-        (name, current + 1, current + 1),
-    )
-    conn.commit()
-    conn.close()
-    return current
 
 
 def make_id(title: str, source: str = "") -> str:
