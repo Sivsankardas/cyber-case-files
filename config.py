@@ -17,6 +17,6 @@ TIMEZONE = "Asia/Kolkata"
 DB_PATH = "posted_history.db"
 
 # --- Brand ---
-CHANNEL_HANDLE = "@YourChannelName"      # shown in footer
-BRAND_TAG = "Team Cyronex"               # optional credit line
+CHANNEL_HANDLE = "@WH04M1Intel"      # shown in footer
+BRAND_TAG = "@WH04M1Intel"               # optional credit line
 HASHTAGS = "#CyberSecurity #CyberCrime #InfoSec #StaySafeOnline"
