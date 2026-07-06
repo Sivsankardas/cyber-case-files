@@ -10,21 +10,28 @@ Format alternates by calendar day:
   - odd days  -> "news_flash" (fresh RSS news + bilingual tip)
 Falls back to a historical case if RSS feeds are unreachable/dry.
 """
-import random
 import datetime
 
 from sources import HISTORICAL_CASES, SECURITY_TIPS
 from news_fetcher import fetch_fresh_news_item
 from content_generator import generate_case_file_post, generate_news_flash_post
 from telegram_poster import post_to_telegram
-from storage import mark_posted
+from storage import mark_posted, next_counter_value
 
 
 def pick_historical_case():
-    # Rotate deterministically through the pool based on day-of-year so it
-    # cycles predictably instead of repeating randomly.
-    day_index = datetime.date.today().timetuple().tm_yday
-    return HISTORICAL_CASES[day_index % len(HISTORICAL_CASES)]
+    # Rotates through the pool in order every time this is called (persisted
+    # in posted_history.db), so it never shows the same case twice in a row
+    # even if the workflow runs multiple times in one day. Also returns a
+    # running case number for the "CASE FILE #NNN" header.
+    idx = next_counter_value("case_file_index")
+    case_number = idx + 1
+    return HISTORICAL_CASES[idx % len(HISTORICAL_CASES)], case_number
+
+
+def pick_tip():
+    idx = next_counter_value("tip_index")
+    return SECURITY_TIPS[idx % len(SECURITY_TIPS)]
 
 
 def run_once():
@@ -33,18 +40,18 @@ def run_once():
     print(f"[{datetime.datetime.now()}] Running — format: {fmt}")
 
     if fmt == "case_file":
-        case = pick_historical_case()
-        post_text = generate_case_file_post(case)
+        case, case_number = pick_historical_case()
+        post_text = generate_case_file_post(case, case_number)
     else:
         news = fetch_fresh_news_item()
-        tip = random.choice(SECURITY_TIPS)
+        tip = pick_tip()
         if news:
             post_text = generate_news_flash_post(news, tip)
             mark_posted(news["id"], news["title"])
         else:
             print("No fresh news available, falling back to historical case.")
-            case = pick_historical_case()
-            post_text = generate_case_file_post(case)
+            case, case_number = pick_historical_case()
+            post_text = generate_case_file_post(case, case_number)
 
     post_to_telegram(post_text)
     print("✅ Posted successfully.")
