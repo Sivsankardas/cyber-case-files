@@ -51,6 +51,30 @@ def generate_case_file_post(case: dict, case_number: int) -> str:
 {HASHTAGS} {CHANNEL_HANDLE}"""
 
 
+def generate_bounty_tip_post(tip: dict) -> str:
+    return f"""🐞 *BUG BOUNTY TIP*
+🏷 Category: {tip['category']}
+
+💡 {tip['en_tip']}
+
+🖥 `{tip['command']}`
+
+⚠️ _Only test on systems you're authorized for — bug bounty scope, labs, or your own infra._
+
+———
+
+🐞 *बग बाउंटी टिप*
+🏷 श्रेणी: {tip['category']}
+
+💡 {tip['hi_tip']}
+
+🖥 `{tip['command']}`
+
+⚠️ _सिर्फ authorized systems पर ही टेस्ट करें — bug bounty scope, labs, या अपने खुद के infra पर।_
+
+{HASHTAGS} #BugBounty #EthicalHacking {CHANNEL_HANDLE}"""
+
+
 def generate_news_flash_post(news_item: dict, tip: dict) -> str:
     title = news_item.get("title", "").strip()
     link = news_item.get("link", "").strip()
