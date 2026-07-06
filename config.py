@@ -18,5 +18,5 @@ DB_PATH = "posted_history.db"
 
 # --- Brand ---
 CHANNEL_HANDLE = "@WH04M1Intel"      # shown in footer
-BRAND_TAG = "Team Cyronex"               # optional credit line
+BRAND_TAG = "TEAM WH04M1"               # optional credit line
 HASHTAGS = "#CyberSecurity #CyberCrime #InfoSec #StaySafeOnline"
