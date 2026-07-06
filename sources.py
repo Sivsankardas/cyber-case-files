@@ -211,3 +211,70 @@ SECURITY_TIPS = [
         "hi": "ज़रूरी डेटा का ऑफलाइन बैकअप रखें (3-2-1 नियम) — रैंसमवेयर से बचने का यही सबसे भरोसेमंद तरीका है।",
     },
 ]
+
+# Bug bounty / VAPT methodology tips — standard public knowledge (OWASP Testing
+# Guide, PortSwigger Academy style content). General technique + a common tool
+# command, no target-specific exploitation. Always practice only on
+# authorized scope (bug bounty programs, labs, or your own systems).
+BUG_BOUNTY_TIPS = [
+    {
+        "category": "Recon",
+        "en_tip": "Start every engagement with subdomain enumeration before touching the main app — forgotten staging subdomains are where the easy wins live.",
+        "hi_tip": "किसी भी engagement की शुरुआत हमेशा subdomain enumeration से करें — भुला दिए गए staging subdomains में अक्सर सबसे आसान bugs मिलते हैं।",
+        "command": "subfinder -d target.com -silent | httpx -silent -status-code",
+    },
+    {
+        "category": "IDOR",
+        "en_tip": "When testing IDOR, don't just change the ID — try swapping it with another valid user's ID from a different account you control, not just incrementing/decrementing.",
+        "hi_tip": "IDOR टेस्ट करते समय सिर्फ ID बदलना काफी नहीं — किसी दूसरे अकाउंट के असली ID से स्वैप करके भी टेस्ट करें, सिर्फ बढ़ाना-घटाना ही काफी नहीं।",
+        "command": "ffuf -u https://target.com/api/user/FUZZ -w ids.txt -H 'Authorization: Bearer <token>'",
+    },
+    {
+        "category": "XSS",
+        "en_tip": "Reflected XSS filters often only block <script> tags. Test with event handlers and non-standard tags before giving up on an input.",
+        "hi_tip": "Reflected XSS filters अक्सर सिर्फ <script> टैग को ब्लॉक करते हैं। किसी input को छोड़ने से पहले event handlers और गैर-मानक टैग से भी टेस्ट करें।",
+        "command": "<svg onload=alert(document.domain)>  /  \"><img src=x onerror=alert(1)>",
+    },
+    {
+        "category": "SQLi",
+        "en_tip": "Time-based blind SQLi is often missed by scanners. If a query returns identical output regardless of input, always test for timing differences.",
+        "hi_tip": "Time-based blind SQLi को अक्सर scanners मिस कर देते हैं। अगर output हर बार एक जैसा दिखे, तो timing में फर्क ज़रूर टेस्ट करें।",
+        "command": "' AND SLEEP(5)-- -   /   sqlmap -u \"https://target.com/item?id=1\" --technique=T",
+    },
+    {
+        "category": "Recon",
+        "en_tip": "Directory/parameter brute-forcing on JS files often reveals hidden API endpoints that were never meant to be public.",
+        "hi_tip": "JS files पर directory/parameter brute-forcing करने से अक्सर hidden API endpoints मिल जाते हैं जो कभी public नहीं होने चाहिए थे।",
+        "command": "katana -u https://target.com -jc | grep -Eo '\\/[a-zA-Z0-9_/-]*\\.js' | sort -u",
+    },
+    {
+        "category": "Access Control",
+        "en_tip": "Always test the same request as a lower-privilege role AND as a completely unauthenticated user — broken access control bugs love role-downgrade edge cases.",
+        "hi_tip": "हमेशा एक ही request को low-privilege role से और बिना login के भी टेस्ट करें — broken access control bugs role-downgrade edge cases में ही सबसे ज़्यादा मिलते हैं।",
+        "command": "curl -X GET https://target.com/api/admin/users -H 'Authorization: Bearer <low_priv_token>'",
+    },
+    {
+        "category": "SSRF",
+        "en_tip": "When a target's URL/image-fetch feature exists, always test cloud metadata endpoints — this single bug class has led to full cloud account takeovers.",
+        "hi_tip": "अगर किसी target में URL/image-fetch वाला feature है, तो cloud metadata endpoints ज़रूर टेस्ट करें — इसी एक bug class से पूरे cloud account takeover हो चुके हैं।",
+        "command": "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+    },
+    {
+        "category": "Recon",
+        "en_tip": "Check GitHub/GitLab for leaked API keys and .env files from a target's employees or old repos — one of the highest-value, lowest-effort bug bounty finds.",
+        "hi_tip": "किसी target के employees या पुराने repos में leaked API keys और .env files के लिए GitHub/GitLab ज़रूर चेक करें — यह सबसे ज़्यादा value वाला और सबसे कम मेहनत वाला bug bounty find है।",
+        "command": "trufflehog github --org=targetorg --only-verified",
+    },
+    {
+        "category": "Business Logic",
+        "en_tip": "Automated scanners can't find business logic flaws — always manually walk through checkout/payment/coupon flows trying to reorder or repeat steps.",
+        "hi_tip": "Automated scanners business logic flaws नहीं ढूंढ सकते — checkout/payment/coupon flows को मैन्युअली, कदम दोहराकर या क्रम बदलकर ज़रूर टेस्ट करें।",
+        "command": "Manual testing only — no single command replaces walking the flow yourself.",
+    },
+    {
+        "category": "Recon",
+        "en_tip": "Always check for exposed .git directories on a target — a full source code leak is one of the most severe findings you can report.",
+        "hi_tip": "किसी target पर exposed .git directory ज़रूर चेक करें — पूरा source code leak होना सबसे गंभीर findings में से एक होता है।",
+        "command": "curl -s https://target.com/.git/HEAD",
+    },
+]
