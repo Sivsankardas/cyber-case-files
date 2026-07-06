@@ -5,10 +5,6 @@ from storage import make_id, already_posted
 
 
 def fetch_fresh_news_item():
-    """
-    Pull a random unposted entry from the configured RSS feeds.
-    Returns dict {title, link, summary, source} or None if nothing new found.
-    """
     feeds = RSS_FEEDS[:]
     random.shuffle(feeds)
 
