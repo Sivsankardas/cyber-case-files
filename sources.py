@@ -1,10 +1,8 @@
 """
-Live RSS news sources. This is the only "source list" left in the project —
-CVEs come from NVD's live API (cve_fetcher.py) and bug bounty disclosures
-come from HackerOne's live Hacktivity feed (bounty_fetcher.py). No static
-or pre-written content exists anywhere in this project anymore.
+Live RSS news sources. CVEs come from NVD's live API (cve_fetcher.py),
+bug bounty writeups from security blog feeds (bounty_fetcher.py), and
+breach claims from ransomware.live's live API (breach_fetcher.py).
 """
-
 RSS_FEEDS = [
     "https://feeds.feedburner.com/TheHackersNews",
     "https://www.bleepingcomputer.com/feed/",
