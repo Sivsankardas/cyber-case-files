@@ -4,7 +4,27 @@
     <title>Cyber Case Files — Live Threat Intel</title>
     <link>https://t.me/WH04M1Intel</link>
     <description>Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more.</description>
-    <lastBuildDate>Tue, 07 Jul 2026 19:58:54 +0000</lastBuildDate>
-
+    <lastBuildDate>Tue, 07 Jul 2026 20:00:01 +0000</lastBuildDate>
+    <item>
+      <title>CVE-2026-9836</title>
+      <link>https://nvd.nist.gov/vuln/detail/CVE-2026-9836</link>
+      <guid isPermaLink="false">4a38efa09a915006ffaa8f3d3976909d39370d631d759a9a576e5175020e467a</guid>
+      <pubDate>Tue, 07 Jul 2026 20:00:00 +0000</pubDate>
+      <description>IBM InfoSphere Information Server 11.7.0.0 through 11.7.1.6 is affected by an information disclosure vulnerability.</description>
+    </item>
+    <item>
+      <title>CVE-2026-11712</title>
+      <link>https://nvd.nist.gov/vuln/detail/CVE-2026-11712</link>
+      <guid isPermaLink="false">8aa079abcbf7af6581bcfa1ba8389568874bd574d887f3af1a27e3cee6f2f349</guid>
+      <pubDate>Tue, 07 Jul 2026 19:59:54 +0000</pubDate>
+      <description>IBM WebSphere Application Server 9.0, and 8.5 is affected by a cross-site scripting vulnerability in the administrative console help system.</description>
+    </item>
+    <item>
+      <title>CVE-2026-12085</title>
+      <link>https://nvd.nist.gov/vuln/detail/CVE-2026-12085</link>
+      <guid isPermaLink="false">65336fc3fe79affcd681647e1f64198e34271e0f4ebad00307d9606c8e3d3021</guid>
+      <pubDate>Tue, 07 Jul 2026 19:59:48 +0000</pubDate>
+      <description>IBM UCD - IBM UrbanCode Deploy 7.3 through 7.3.2.18 and IBM UCD - IBM DevOps Deploy 8.0 through 8.0.1.13, 8.1 through 8.1.2.6, and 8.2 through 8.2.1.0 IBM DevOps Deploy could disclose sensitive configurations and secrets to authenticated users in API responses that could be used in further attacks against the system.</description>
+    </item>
   </channel>
 </rss>
