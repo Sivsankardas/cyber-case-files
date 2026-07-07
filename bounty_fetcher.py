@@ -1,9 +1,6 @@
 """
 Pulls real, live bug bounty write-ups and disclosed vulnerability research
-from multiple active sources. Since these feeds are already topic-specific
-(tagged "bug bounty" / "penetration testing" etc. by their platforms), no
-extra keyword filtering is applied — that filtering was likely discarding
-too many valid entries before.
+from multiple active sources.
 """
 import feedparser
 import random
@@ -42,7 +39,6 @@ def fetch_recent_disclosure():
             title = entry.get("title", "").strip()
             link = entry.get("link", "").strip()
             summary = _strip_html(entry.get("summary", "") or entry.get("description", ""))[:500]
-
             if not title or not link:
                 continue
 
@@ -59,5 +55,4 @@ def fetch_recent_disclosure():
             }
 
         print(f"[Bounty fetch] No new items in {feed_url} (all posted already or empty).")
-
     return None
