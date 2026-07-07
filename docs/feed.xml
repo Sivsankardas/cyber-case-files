@@ -4,7 +4,14 @@
     <title>Cyber Case Files — Live Threat Intel</title>
     <link>https://t.me/WH04M1Intel</link>
     <description>Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more.</description>
-    <lastBuildDate>Tue, 07 Jul 2026 20:05:01 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Jul 2026 20:57:25 +0000</lastBuildDate>
+    <item>
+      <title>Dialogflow CX &#x27;Rogue Agent&#x27; Flaw Enabled AI Chatbot Data Theft</title>
+      <link>https://www.darkreading.com/application-security/dialogflow-cx-rogue-agent-flaw-enabled-ai-chatbot-data-theft</link>
+      <guid isPermaLink="false">fd5ccea6f1f931ebb70d4396660e3a0f9a266f43ac0a201cbf0f5ea78b020a4c</guid>
+      <pubDate>Tue, 07 Jul 2026 20:57:25 +0000</pubDate>
+      <description>Varonis reported the flaw to Google in late 2025 and it has been addressed, but it reminds defenders to take a fresh look at their AI Infrastructure security.</description>
+    </item>
     <item>
       <title>Moody Bible Institute</title>
       <link>https://haveibeenpwned.com/PwnedWebsites#MoodyBibleInstitute</link>
