@@ -1,15 +1,16 @@
 """
-Live ransomware/extortion group breach claims, pulled from ransomware.live's
+Live ransomware/extortion group breach CLAIMS, pulled from ransomware.live's
 public API. Tracks what groups themselves post publicly on their leak
 sites -- does not host or distribute leaked data. Claims are unverified
 by definition until the victim organization confirms.
+(Distinct from leaked_creds_fetcher.py, which uses HIBP's list of
+independently-confirmed breaches.)
 """
 import requests
 from storage import make_id, already_posted
 
 API_URL = "https://api.ransomware.live/v2/recentvictims"
 HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0"}
-
 
 def fetch_recent_breach_claim():
     try:
@@ -25,14 +26,13 @@ def fetch_recent_breach_claim():
         group = (v.get("group") or "Unknown").strip()
         if not victim_name:
             continue
-
         item_id = make_id(f"{victim_name}|{group}", v.get("attackdate", ""))
         if already_posted(item_id):
             continue
-
         press = v.get("press") or []
-        link = press[0] if press else f"https://www.ransomware.live/group/{group.lower()}"
-
+        import urllib.parse
+        safe_group = urllib.parse.quote(group.lower())
+        link = press[0] if press else f"https://www.ransomware.live/group/{safe_group}"
         return {
             "id": item_id,
             "victim": victim_name,
