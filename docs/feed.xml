@@ -4,7 +4,14 @@
     <title>Cyber Case Files — Live Threat Intel</title>
     <link>https://t.me/WH04M1Intel</link>
     <description>Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more.</description>
-    <lastBuildDate>Tue, 07 Jul 2026 20:01:56 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Jul 2026 20:02:34 +0000</lastBuildDate>
+    <item>
+      <title>A single RedLine C2 pivots into a maritime spear-phishing cluster and attacker-owned infrastructure.</title>
+      <link>https://otx.alienvault.com/pulse/6a464b96bef17724be5668a0</link>
+      <guid isPermaLink="false">71655390900684c37bb793771d7a10a046053e0150b8713f6eec794008f9cb8b</guid>
+      <pubDate>Tue, 07 Jul 2026 20:02:33 +0000</pubDate>
+      <description>An investigation beginning with a single RedLine Stealer C2 server from VMRay UniqueSignal evolved into uncovering a targeted Business Email Compromise campaign against South Korean maritime infrastructure. The analysis started with IP 194.156.79.122 on port 55615, leveraging fingerprinting techniques through FOFA and VirusTotal to identify additional C2 infrastructure. Pivoting through communicating files revealed spear-phishing emails targeting Kangrim Heavy Industries, a major South Korean ma</description>
+    </item>
     <item>
       <title>raxa.co.bw</title>
       <link>hxxp://raxa[.]co[.]bw/uhu/LINKEDIN/</link>
