@@ -1,10 +1,9 @@
 """
-Pulls real, live bug bounty and vulnerability research coverage from
-PortSwigger's "The Daily Swig" — a security news outlet that actively covers
-bug bounty disclosures, researcher write-ups, and web security findings.
-
-(Note: HackerOne's public Hacktivity RSS feed was deprecated and no longer
-returns live data, so this replaced it as a more reliable live source.)
+Pulls real, live bug bounty write-ups and disclosed vulnerability research
+from multiple active sources. Since these feeds are already topic-specific
+(tagged "bug bounty" / "penetration testing" etc. by their platforms), no
+extra keyword filtering is applied — that filtering was likely discarding
+too many valid entries before.
 """
 import feedparser
 import random
@@ -12,6 +11,10 @@ import re
 from storage import make_id, already_posted
 
 BOUNTY_FEEDS = [
+    "https://infosecwriteups.com/feed",
+    "https://medium.com/feed/tag/bug-bounty",
+    "https://medium.com/feed/tag/bugbounty",
+    "https://medium.com/feed/tag/penetration-testing",
     "https://portswigger.net/daily-swig/rss",
 ]
 
@@ -22,42 +25,39 @@ def _strip_html(text: str) -> str:
 
 
 def fetch_recent_disclosure():
-    entries_pool = []
+    feeds = BOUNTY_FEEDS[:]
+    random.shuffle(feeds)
 
-    for feed_url in BOUNTY_FEEDS:
+    for feed_url in feeds:
         try:
             parsed = feedparser.parse(feed_url)
-            entries_pool.extend(parsed.entries[:30])
         except Exception as e:
             print(f"[Bounty feed error] {feed_url}: {e}")
             continue
 
-    random.shuffle(entries_pool)
+        entries = parsed.entries[:20]
+        random.shuffle(entries)
 
-    for entry in entries_pool:
-        title = entry.get("title", "").strip()
-        link = entry.get("link", "").strip()
-        summary = _strip_html(entry.get("summary", "") or entry.get("description", ""))[:500]
+        for entry in entries:
+            title = entry.get("title", "").strip()
+            link = entry.get("link", "").strip()
+            summary = _strip_html(entry.get("summary", "") or entry.get("description", ""))[:500]
 
-        if not title or not link:
-            continue
+            if not title or not link:
+                continue
 
-        relevant_keywords = ["bounty", "bug", "vulnerab", "disclos", "exploit",
-                             "hacker", "researcher", "flaw", "cve", "patch"]
-        text_to_check = (title + " " + summary).lower()
-        is_relevant = any(kw in text_to_check for kw in relevant_keywords)
-        if not is_relevant:
-            continue
+            item_id = make_id(title, link)
+            if already_posted(item_id):
+                continue
 
-        item_id = make_id(title, link)
-        if already_posted(item_id):
-            continue
+            print(f"[Bounty fetch] Found item from {feed_url}: {title}")
+            return {
+                "id": item_id,
+                "title": title,
+                "link": link,
+                "summary": summary,
+            }
 
-        return {
-            "id": item_id,
-            "title": title,
-            "link": link,
-            "summary": summary,
-        }
+        print(f"[Bounty fetch] No new items in {feed_url} (all posted already or empty).")
 
     return None
