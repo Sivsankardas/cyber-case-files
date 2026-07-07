@@ -4,7 +4,14 @@
     <title>Cyber Case Files — Live Threat Intel</title>
     <link>https://t.me/WH04M1Intel</link>
     <description>Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more.</description>
-    <lastBuildDate>Tue, 07 Jul 2026 20:02:34 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Jul 2026 20:03:33 +0000</lastBuildDate>
+    <item>
+      <title>May 2026 Security Updates</title>
+      <link>https://msrc.microsoft.com/update-guide/releaseNote/2026-May</link>
+      <guid isPermaLink="false">c0dc82da14d32972e53a8aa8320f96a30b2c093f48e0012014ef55a350668f39</guid>
+      <pubDate>Tue, 07 Jul 2026 20:03:32 +0000</pubDate>
+      <description>1123 CVEs</description>
+    </item>
     <item>
       <title>A single RedLine C2 pivots into a maritime spear-phishing cluster and attacker-owned infrastructure.</title>
       <link>https://otx.alienvault.com/pulse/6a464b96bef17724be5668a0</link>
