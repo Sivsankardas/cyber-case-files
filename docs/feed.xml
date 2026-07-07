@@ -4,7 +4,14 @@
     <title>Cyber Case Files — Live Threat Intel</title>
     <link>https://t.me/WH04M1Intel</link>
     <description>Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more.</description>
-    <lastBuildDate>Tue, 07 Jul 2026 20:03:33 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Jul 2026 20:04:10 +0000</lastBuildDate>
+    <item>
+      <title>Moody Bible Institute</title>
+      <link>https://haveibeenpwned.com/PwnedWebsites#MoodyBibleInstitute</link>
+      <guid isPermaLink="false">31705dd83fdbca7b11e47277b2ce78d5103142be85d3f04e79dbbb3c642b081d</guid>
+      <pubDate>Tue, 07 Jul 2026 20:04:09 +0000</pubDate>
+      <description>In June 2026, Moody Bible Institute was targeted by a ShinyHunters &quot;pay or leak&quot; extortion campaign. Over 2.3M unique email addresses and other personal data were later published publicly, including names, physical addresses, phone numbers, dates of birth and other information relating to donors, supporters, students and alumni. In their disclosure notice, Moody advised that they had &quot;engaged both internal and external cybersecurity experts to thoroughly investigate the matter&quot;.</description>
+    </item>
     <item>
       <title>May 2026 Security Updates</title>
       <link>https://msrc.microsoft.com/update-guide/releaseNote/2026-May</link>
