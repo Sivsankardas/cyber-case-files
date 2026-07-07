@@ -1,13 +1,6 @@
 """
 Live-only content generator. Every post is built from data fetched at
-run time — no pre-written cases, no static examples. Templates below only
-format the live data; they don't invent content.
-
-Note on language: since the underlying data (CVE descriptions, news
-headlines, bug bounty report titles) is fetched live and must stay factually
-exact, it's kept in English with the source link included. Auto-translating
-live technical text isn't reliable enough to trust unattended, so only the
-wrapper labels are bilingual. This keeps the content 100% accurate to source.
+run time -- no pre-written cases, no static examples.
 """
 import re
 from config import HASHTAGS, CHANNEL_HANDLE
@@ -19,12 +12,6 @@ def _strip_html(text: str) -> str:
 
 
 def _sanitize_md(text: str) -> str:
-    """
-    Live text (CVE descriptions, report titles, news headlines) can contain
-    characters that break Telegram's legacy Markdown parser (*, _, `, [).
-    Since we can't control what's in real-time source text, strip those
-    characters so the message always sends successfully.
-    """
     if not text:
         return text
     for ch in ("*", "_", "`", "[", "]"):
@@ -36,10 +23,13 @@ def generate_news_flash_post(news_item: dict) -> str:
     title = _sanitize_md(news_item.get("title", "").strip())
     link = news_item.get("link", "").strip()
     summary = _sanitize_md(_strip_html(news_item.get("summary", ""))[:500])
-
+    age = news_item.get("age_minutes")
+    freshness_tag = f"⚡ Published {int(age)} min ago" if age is not None else ""
     return f"""🚨 *CYBER NEWS FLASH* / *साइबर न्यूज़ फ्लैश*
+{freshness_tag}
 
 *{title}*
+
 {summary}
 
 🔗 {link}
@@ -54,9 +44,7 @@ def generate_cve_alert_post(cve: dict) -> str:
         "MEDIUM": "🟡",
         "LOW": "🟢",
     }.get(str(cve.get("severity", "")).upper(), "⚪")
-
     description = _sanitize_md(cve.get("description", ""))
-
     return f"""🛑 *LIVE CVE ALERT* / *लाइव CVE अलर्ट*
 
 🆔 {cve['cve_id']}
@@ -72,14 +60,46 @@ def generate_cve_alert_post(cve: dict) -> str:
 def generate_bounty_disclosure_post(report: dict) -> str:
     title = _sanitize_md(report.get("title", ""))
     summary = _sanitize_md(report.get("summary", ""))
-
     return f"""🐞 *LIVE BUG BOUNTY DISCLOSURE* / *लाइव बग बाउंटी डिस्क्लोज़र*
 
 *{title}*
+
 {summary}
 
 🔗 {report['link']}
 
-⚠️ Real disclosed report from a public bug bounty program — for learning, not replication without authorization.
+⚠️ Real disclosed report from a public bug bounty program -- for learning, not replication without authorization.
 
 {HASHTAGS} #BugBounty #EthicalHacking {CHANNEL_HANDLE}"""
+
+
+def generate_breach_claim_post(item: dict) -> str:
+    victim = _sanitize_md(item.get("victim", ""))
+    group = _sanitize_md(item.get("group", ""))
+    sector = _sanitize_md(str(item.get("sector", "Not disclosed")))
+    country = item.get("country", "N/A")
+    observed = item.get("observed", "N/A")
+    return f"""🚩 *CLAIMED DATA BREACH* / *दावा किया गया डेटा ब्रीच*
+
+Threat actor: {group}
+Target: {victim}
+Sector: {sector}
+Country: {country}
+Observed: {observed}
+Status: ⚠️ Claimed by threat actor -- pending verification
+
+🔗 {item['link']}
+
+⚠️ This is an unverified claim from a leak-site monitor, not a confirmed breach. Included for awareness only.
+
+{HASHTAGS} #DataBreach #ThreatIntel {CHANNEL_HANDLE}"""
+
+
+def generate_cve_severity_poll(cve: dict):
+    real_severity = str(cve.get("severity", "")).upper()
+    levels = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    if real_severity not in levels:
+        return None
+    question = f"🎯 Guess the CVSS severity: {cve['cve_id']}"
+    correct_index = levels.index(real_severity)
+    return question, levels, correct_index
