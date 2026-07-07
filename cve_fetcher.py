@@ -2,10 +2,13 @@ import requests
 import random
 from datetime import datetime, timedelta, timezone
 from storage import make_id, already_posted
+from hashtag_helper import get_dynamic_hashtags
+from config import NVD_API_KEY
 
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0 (+https://t.me/WH04M1Intel)"}
-
+HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0"}
+if NVD_API_KEY:
+    HEADERS["apiKey"] = NVD_API_KEY
 
 def fetch_recent_cve():
     end = datetime.now(timezone.utc)
@@ -25,13 +28,11 @@ def fetch_recent_cve():
 
     vulns = data.get("vulnerabilities", [])
     random.shuffle(vulns)
-
     for item in vulns:
         cve = item.get("cve", {})
         cve_id = cve.get("id", "")
         if not cve_id:
             continue
-
         item_id = make_id(cve_id, "nvd")
         if already_posted(item_id):
             continue
@@ -57,5 +58,6 @@ def fetch_recent_cve():
             "severity": severity,
             "score": score,
             "link": f"https://nvd.nist.gov/vuln/detail/{cve_id}",
+            "hashtags": get_dynamic_hashtags(cve),
         }
     return None
