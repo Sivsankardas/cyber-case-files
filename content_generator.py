@@ -93,13 +93,3 @@ Status: ⚠️ Claimed by threat actor -- pending verification
 ⚠️ This is an unverified claim from a leak-site monitor, not a confirmed breach. Included for awareness only.
 
 {HASHTAGS} #DataBreach #ThreatIntel {CHANNEL_HANDLE}"""
-
-
-def generate_cve_severity_poll(cve: dict):
-    real_severity = str(cve.get("severity", "")).upper()
-    levels = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
-    if real_severity not in levels:
-        return None
-    question = f"🎯 Guess the CVSS severity: {cve['cve_id']}"
-    correct_index = levels.index(real_severity)
-    return question, levels, correct_index
