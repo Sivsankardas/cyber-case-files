@@ -4,7 +4,28 @@
     <title>Cyber Case Files — Live Threat Intel</title>
     <link>https://t.me/WH04M1Intel</link>
     <description>Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more.</description>
-    <lastBuildDate>Tue, 07 Jul 2026 20:00:01 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Jul 2026 20:00:47 +0000</lastBuildDate>
+    <item>
+      <title>When a Proxy Becomes a Spy: Hunting an SSRF That Led Straight Into the Server Room</title>
+      <link>https://medium.com/@yogeshbhandage/when-a-proxy-becomes-a-spy-hunting-an-ssrf-that-led-straight-into-the-server-room-99445fd2f95f?source=rss------bugbounty-5</link>
+      <guid isPermaLink="false">f3d4e81334162c446174e7144691c6ad61ab2b7f4ff5a0f953a148fbec87bee1</guid>
+      <pubDate>Tue, 07 Jul 2026 20:00:46 +0000</pubDate>
+      <description>Hello folks!! &amp;#x1f44b;Continue reading on Medium »</description>
+    </item>
+    <item>
+      <title>The 403 That Wasn’t: How I Ended Up Accessing 100K Azure AD Users : My Microsoft Research Story</title>
+      <link>https://hamzadzworm.medium.com/the-403-that-wasnt-how-i-ended-up-accessing-100k-azure-ad-users-my-microsoft-research-story-985db681f083?source=rss------bug_bounty-5</link>
+      <guid isPermaLink="false">607701a598f3b9cbf072bb84963f827b04ab1a6b4496e30aac8e17938d9e408f</guid>
+      <pubDate>Tue, 07 Jul 2026 20:00:40 +0000</pubDate>
+      <description>Hi again,Continue reading on Medium »</description>
+    </item>
+    <item>
+      <title>How a $10 Fee Can Lock Thousands of Dollars Forever</title>
+      <link>https://medium.com/@bvize.com/how-a-10-fee-can-lock-thousands-of-dollars-forever-76fa9b448062?source=rss------bug_bounty-5</link>
+      <guid isPermaLink="false">1311ef814fdbd1ac3e9649d0983b38939f8be8b15c386a15b07ba2d5d4d8599c</guid>
+      <pubDate>Tue, 07 Jul 2026 20:00:33 +0000</pubDate>
+      <description>Somewhere inside millions of lines of code that move real money between blockchains, one sequence of four simple steps &amp;#x2014; written by&amp;#x2026;Continue reading on Medium »</description>
+    </item>
     <item>
       <title>CVE-2026-9836</title>
       <link>https://nvd.nist.gov/vuln/detail/CVE-2026-9836</link>
