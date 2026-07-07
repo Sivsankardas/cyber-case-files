@@ -4,7 +4,28 @@
     <title>Cyber Case Files — Live Threat Intel</title>
     <link>https://t.me/WH04M1Intel</link>
     <description>Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more.</description>
-    <lastBuildDate>Tue, 07 Jul 2026 20:00:47 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Jul 2026 20:01:29 +0000</lastBuildDate>
+    <item>
+      <title>URA Group</title>
+      <link>https://www.ransomware.live/group/booba%20project</link>
+      <guid isPermaLink="false">cabee2b43637342eeec516c7966d025f056acf59afecee41efcc496e7c7b6199</guid>
+      <pubDate>Tue, 07 Jul 2026 20:01:29 +0000</pubDate>
+      <description>Not disclosed</description>
+    </item>
+    <item>
+      <title>YMCA of Western North Carolina</title>
+      <link>https://www.ransomware.live/group/interlock</link>
+      <guid isPermaLink="false">d1973e6187555745e602bf16eb557c2302c6d24c8172e78a4f1a33cb7fc6fcee</guid>
+      <pubDate>Tue, 07 Jul 2026 20:01:23 +0000</pubDate>
+      <description>Not disclosed</description>
+    </item>
+    <item>
+      <title>United Infrastructure</title>
+      <link>https://www.ransomware.live/group/play</link>
+      <guid isPermaLink="false">4398e4b7542ffe8a5378b0d0bce99bd139904efaada5c38bfbedb1a1c5cfd476</guid>
+      <pubDate>Tue, 07 Jul 2026 20:01:16 +0000</pubDate>
+      <description>Not disclosed</description>
+    </item>
     <item>
       <title>When a Proxy Becomes a Spy: Hunting an SSRF That Led Straight Into the Server Room</title>
       <link>https://medium.com/@yogeshbhandage/when-a-proxy-becomes-a-spy-hunting-an-ssrf-that-led-straight-into-the-server-room-99445fd2f95f?source=rss------bugbounty-5</link>
