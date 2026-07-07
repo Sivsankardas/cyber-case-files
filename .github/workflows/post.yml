@@ -1,67 +1,67 @@
-name: Post to Cyber Case Files Telegram Channel
+name: Cyber Case Files - Auto Post
 
 on:
   schedule:
-    # Times are UTC. IST = UTC+5:30.
-    - cron: "30 4 * * *"   # 10:00 AM IST -> CVE batch
-    - cron: "30 7 * * *"   # 1:00 PM IST  -> News batch
-    - cron: "30 11 * * *"  # 5:00 PM IST  -> Bug bounty batch
+    - cron: '*/10 * * * *'
+    - cron: '15 5,15 * * *'
+    - cron: '30 9 * * *'
+    - cron: '45 12 * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: "Which content type to post (for manual testing)"
+        description: 'Mode to run manually'
         required: true
-        default: "cve"
+        default: 'news'
         type: choice
-        options:
-          - cve
-          - news
-          - bounty
+        options: [news, cve, bounty, breach]
 
 jobs:
   post:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt
 
-      - name: Restore posted-history database
-        uses: actions/cache@v4
-        with:
-          path: posted_history.db
-          key: posted-history-db
+      - name: Restore posted_history.db
+        run: |
+          if [ ! -f posted_history.db ]; then
+            touch posted_history.db
+          fi
 
-      - name: Determine mode from schedule
+      - name: Determine mode
         id: mode
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "30 4 * * *" ]; then
-            echo "mode=cve" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "30 7 * * *" ]; then
-            echo "mode=news" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "30 11 * * *" ]; then
-            echo "mode=bounty" >> "$GITHUB_OUTPUT"
           else
-            echo "mode=news" >> "$GITHUB_OUTPUT"
+            MIN=$(date -u +%M)
+            HOUR=$(date -u +%H)
+            if [ "$HOUR-$MIN" = "05-15" ] || [ "$HOUR-$MIN" = "15-15" ]; then
+              echo "mode=cve" >> "$GITHUB_OUTPUT"
+            elif [ "$HOUR-$MIN" = "09-30" ]; then
+              echo "mode=bounty" >> "$GITHUB_OUTPUT"
+            elif [ "$HOUR-$MIN" = "12-45" ]; then
+              echo "mode=breach" >> "$GITHUB_OUTPUT"
+            else
+              echo "mode=news" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
-      - name: Post batch
+      - name: Run bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
         run: python main.py ${{ steps.mode.outputs.mode }}
 
-      - name: Save posted-history database
-        uses: actions/cache/save@v4
-        with:
-          path: posted_history.db
-          key: posted-history-db-${{ github.run_id }}
+      - name: Commit updated posted_history.db
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add posted_history.db
+          git diff --cached --quiet || git commit -m "Update posted history [skip ci]"
+          git push
