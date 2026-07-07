@@ -5,7 +5,7 @@ Usage:
     python main.py news     -> real-time mode: posts ONE news item only if
                                 something was published in the last
                                 FRESHNESS_WINDOW_MINUTES.
-    python main.py cve      -> posts 3 live CVE alerts (+ severity poll each)
+    python main.py cve      -> posts 3 live CVE alerts
     python main.py bounty   -> posts 3 live bug bounty disclosures
     python main.py breach   -> posts 3 live claimed breach disclosures
 """
@@ -22,9 +22,8 @@ from content_generator import (
     generate_cve_alert_post,
     generate_bounty_disclosure_post,
     generate_breach_claim_post,
-    generate_cve_severity_poll,
 )
-from telegram_poster import post_to_telegram, send_poll
+from telegram_poster import post_to_telegram
 from storage import mark_posted
 
 ITEMS_PER_RUN = 3
@@ -55,15 +54,6 @@ def post_cve_batch(count=ITEMS_PER_RUN):
         post_to_telegram(generate_cve_alert_post(cve))
         posted += 1
         print(f"✅ Posted CVE {posted}/{count}: {cve['cve_id']}")
-
-        poll_data = generate_cve_severity_poll(cve)
-        if poll_data:
-            question, options, correct_index = poll_data
-            time.sleep(2)
-            try:
-                send_poll(question, options, correct_option_id=correct_index)
-            except Exception as e:
-                print(f"[Poll skipped] {e}")
 
         if posted < count:
             time.sleep(DELAY_BETWEEN_POSTS_SECONDS)
