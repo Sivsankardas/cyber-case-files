@@ -1,56 +1,78 @@
 """
-Live phishing/scam alert fetcher.
-
-Primary source: OpenPhish's free community feed (https://openphish.com/feed.txt),
-a plain-text list of currently active phishing URLs, no API key required.
-
-Note: the free OpenPhish feed gives URLs only (no metadata like target brand),
-so we derive a human-readable "impersonates" guess from the domain itself where
-possible, and are upfront in the post that this is an automated feed entry.
+Live active-phishing fetcher. Primary source is phishunt.io's free public
+API (no auth), which enriches raw phishing URLs with the impersonated
+company, hosting IP/org, and detection source. Falls back to OpenPhish's
+free feed.txt (bare URL list, no metadata) if phishunt is unreachable.
 """
 import requests
-import re
-from urllib.parse import urlparse
 from storage import make_id, already_posted
-from freshness import humanize_age
 
-OPENPHISH_FEED_URL = "https://openphish.com/feed.txt"
+PHISHUNT_URL = "https://phishunt.io/api/v1/domains"
+OPENPHISH_URL = "https://openphish.com/feed.txt"
 HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0"}
 
 
-def _guess_target(url: str) -> str:
-    host = urlparse(url).netloc.lower()
-    brands = [
-        "paypal", "amazon", "apple", "microsoft", "google", "facebook", "instagram",
-        "netflix", "bankofamerica", "wellsfargo", "chase", "irs", "dhl", "fedex",
-        "usps", "coinbase", "binance", "outlook", "office365", "linkedin", "whatsapp",
-    ]
-    for b in brands:
-        if b in host:
-            return b.capitalize()
-    return "Unknown / unbranded"
-
-
-def fetch_active_phishing_url():
-    try:
-        resp = requests.get(OPENPHISH_FEED_URL, headers=HEADERS, timeout=30)
-        resp.raise_for_status()
-        lines = [l.strip() for l in resp.text.splitlines() if l.strip().startswith("http")]
-    except Exception as e:
-        print(f"[Phishing fetch error] {e}")
-        return None
-
-    for url in lines:
-        item_id = make_id(url, "openphish")
+def _from_phishunt():
+    resp = requests.get(PHISHUNT_URL, headers=HEADERS, params={"limit": 30}, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    for site in data.get("results", []):
+        url = (site.get("url") or "").strip()
+        domain = (site.get("domain") or "").strip()
+        if not url or not domain:
+            continue
+        item_id = make_id(domain, "phishunt")
         if already_posted(item_id):
             continue
-        domain = urlparse(url).netloc
         return {
             "id": item_id,
-            "url": url,
             "domain": domain,
-            "impersonates": _guess_target(url),
+            "impersonates": site.get("company") or "Unknown brand",
+            "first_seen": site.get("first_seen", "N/A"),
+            "country": site.get("country", "N/A"),
+            "org": site.get("org", "N/A"),
             "link": url,
-            "freshness": humanize_age(None),  # OpenPhish's free feed doesn't expose a per-URL timestamp
         }
+    return None
+
+
+def _from_openphish():
+    resp = requests.get(OPENPHISH_URL, headers=HEADERS, timeout=30)
+    resp.raise_for_status()
+    urls = [u.strip() for u in resp.text.splitlines() if u.strip()]
+    for url in urls[:30]:
+        try:
+            domain = url.split("/")[2]
+        except IndexError:
+            continue
+        item_id = make_id(domain, "openphish")
+        if already_posted(item_id):
+            continue
+        return {
+            "id": item_id,
+            "domain": domain,
+            "impersonates": "Not specified by source",
+            "first_seen": "N/A",
+            "country": "N/A",
+            "org": "N/A",
+            "link": url,
+        }
+    return None
+
+
+def fetch_active_phishing():
+    try:
+        result = _from_phishunt()
+        if result:
+            return result
+    except Exception as e:
+        print(f"[Phishunt fetch error] {e}")
+
+    try:
+        result = _from_openphish()
+        if result:
+            return result
+    except Exception as e:
+        print(f"[OpenPhish fetch error] {e}")
+
     return None
