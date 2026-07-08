@@ -131,7 +131,7 @@ Set `RSS_SELF_URL` in `config.py` to whichever URL you use.
 ```bash
 pip install -r requirements.txt
 export TELEGRAM_BOT_TOKEN="..."
-export TELEGRAM_CHANNEL_ID="@WH04M1Intel"
+export TELEGRAM_CHANNEL_ID="@yourchannelid"
 python main.py auto   # checks all categories once, same as the 5-min cron does
 # or force a single category regardless of pacing: python main.py news
 ```
