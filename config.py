@@ -9,12 +9,11 @@ import os
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "PASTE_YOUR_BOT_TOKEN_HERE")
 TELEGRAM_CHANNEL_ID = os.environ.get("TELEGRAM_CHANNEL_ID", "@your_channel_username")
 
-# --- Optional API keys (free tiers) ---
-# NVD: raises rate limit from ~5/30s to ~50/30s. Get one free at
-#      https://nvd.nist.gov/developers/request-an-api-key
+# --- Optional keys (free tiers) ---
+# NVD: https://nvd.nist.gov/developers/request-an-api-key  (raises rate limit 5/30s -> 50/30s)
 NVD_API_KEY = os.environ.get("NVD_API_KEY", "")
-# AlienVault OTX: required for the threat-actor/malware spotlight feature.
-#      Free account + key at https://otx.alienvault.com/api
+# AlienVault OTX: https://otx.alienvault.com/api  (free account, used only as an optional
+# secondary source for the threat-actor spotlight; MITRE ATT&CK is the primary, keyless source)
 OTX_API_KEY = os.environ.get("OTX_API_KEY", "")
 
 # --- Posting schedule (legacy reference; real-time news uses cron interval) ---
@@ -27,15 +26,14 @@ FRESHNESS_WINDOW_MINUTES = 60
 # --- Storage ---
 DB_PATH = "posted_history.db"
 
-# --- RSS output (your own channel as a subscribable feed) ---
-RSS_FEED_PATH = "docs/feed.xml"
-RSS_FEED_TITLE = "Cyber Case Files — Live Threat Intel"
-RSS_FEED_LINK = "https://t.me/WH04M1Intel"
-RSS_FEED_DESCRIPTION = "Live CVEs, phishing alerts, breach claims, malware/APT spotlights and more."
-RSS_MAX_ITEMS = 60
+# --- RSS output (your own channel, re-published as a feed others can subscribe to) ---
+RSS_OUTPUT_PATH = "feed.xml"
+RSS_TITLE = "Cyber Case Files — Live Threat Intel"
+RSS_DESCRIPTION = "Live CVEs, breach claims, phishing alerts, malware/APT spotlights and more, auto-posted from public sources."
+RSS_SELF_URL = os.environ.get("RSS_SELF_URL", "https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/feed.xml")
+RSS_MAX_ITEMS = 100
 
 # --- Brand ---
 CHANNEL_HANDLE = "@WH04M1Intel"
 BRAND_TAG = "TEAM WH04M1"
 HASHTAGS = "#CyberSecurity #CyberCrime #InfoSec #StaySafeOnline"
-ENGAGEMENT_CTA = "💬 React & forward if this helped you stay safe!"
