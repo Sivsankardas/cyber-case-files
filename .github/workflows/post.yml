@@ -1,25 +1,27 @@
 name: Cyber Case Files - Auto Post
+
 on:
   schedule:
-    - cron: '*/10 * * * *'      # news (default/fallback)
-    - cron: '15 5,15 * * *'     # cve
-    - cron: '30 9 * * *'        # bounty
-    - cron: '45 12 * * *'       # breach
-    - cron: '0 7 * * *'         # phishing/scam alert
-    - cron: '20 11 * * *'       # threat actor / malware spotlight
-    - cron: '0 14 * * 2'        # patch tuesday (checked every Tuesday, no-op if nothing new)
-    - cron: '40 16 * * *'       # leaked credentials / confirmed breach
-    - cron: '5 18 * * *'        # daily engagement quiz
+    - cron: '*/10 * * * *'   # single trigger: checks EVERY category every 10 min
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Mode to run manually'
+        description: 'Mode to run manually (auto = normal 10-min behavior, right now)'
         required: true
-        default: 'news'
+        default: 'auto'
         type: choice
-        options: [news, cve, bounty, breach, phishing, threat, patchtuesday, leakedcreds, quiz]
+        options:
+          - auto
+          - news
+          - cve
+          - bounty
+          - breach
+          - phishing
+          - threat_actor
+          - patch_tuesday
+          - leaked_creds
+          - quiz
 
-# Prevent overlapping runs from racing on posted_history.db / git push
 concurrency:
   group: cyber-case-files-post
   cancel-in-progress: false
@@ -48,20 +50,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
           else
-            # Match on the EXACT cron string that triggered this run.
-            # This is robust to GitHub Actions scheduling delays (a few
-            # minutes of drift no longer causes the wrong mode to fire).
-            case "${{ github.event.schedule }}" in
-              "15 5,15 * * *") echo "mode=cve" >> "$GITHUB_OUTPUT" ;;
-              "30 9 * * *")    echo "mode=bounty" >> "$GITHUB_OUTPUT" ;;
-              "45 12 * * *")   echo "mode=breach" >> "$GITHUB_OUTPUT" ;;
-              "0 7 * * *")     echo "mode=phishing" >> "$GITHUB_OUTPUT" ;;
-              "20 11 * * *")   echo "mode=threat" >> "$GITHUB_OUTPUT" ;;
-              "0 14 * * 2")    echo "mode=patchtuesday" >> "$GITHUB_OUTPUT" ;;
-              "40 16 * * *")   echo "mode=leakedcreds" >> "$GITHUB_OUTPUT" ;;
-              "5 18 * * *")    echo "mode=quiz" >> "$GITHUB_OUTPUT" ;;
-              *)               echo "mode=news" >> "$GITHUB_OUTPUT" ;;
-            esac
+            echo "mode=auto" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run bot
@@ -72,24 +61,15 @@ jobs:
           OTX_API_KEY: ${{ secrets.OTX_API_KEY }}
         run: python main.py ${{ steps.mode.outputs.mode }}
 
-      - name: Commit updated posted_history.db and RSS feed
+      - name: Commit updated history + feed
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add posted_history.db docs/feed.xml
-
+          git add posted_history.db feed.xml
           if git diff --cached --quiet; then
             echo "Nothing to commit."
-            exit 0
+          else
+            git commit -m "Update posted history + feed [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push
           fi
-
-          git commit -m "Update posted history [skip ci]"
-
-          # Rebase-and-retry to survive races between overlapping runs
-          # (concurrency: group above should prevent most of these, but
-          # this is a safety net for anything that slips through).
-          for i in 1 2 3 4 5; do
-            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && break
-            echo "Push failed (attempt $i), retrying after rebase..."
-            sleep $((RANDOM % 10 + 1))
-          done
