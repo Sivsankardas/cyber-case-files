@@ -1,54 +1,71 @@
 """
-Microsoft "Patch Tuesday" tracker -- pulled live from Microsoft's own
-MSRC CVRF API (free, no key required). Auto-detects the latest monthly
-security update release and only posts once per month (dedup by release ID).
+Live "Patch Tuesday" tracker.
+
+Source: Microsoft's public MSRC CVRF API (https://api.msrc.microsoft.com),
+no API key required for read access to monthly security update summaries.
+We only want this to actually post something on/after the second Tuesday
+of the month (when Patch Tuesday happens), which the workflow's cron
+schedule handles -- this module just fetches and summarizes whatever the
+current month's document contains.
 """
 import requests
+from datetime import datetime, timezone
 from storage import make_id, already_posted
+from freshness import parse_iso, humanize_age
 
-UPDATES_URL = "https://api.msrc.microsoft.com/cvrf/v3.0/updates"
-DETAIL_URL = "https://api.msrc.microsoft.com/cvrf/v3.0/cvrf/{id}"
+MSRC_BASE = "https://api.msrc.microsoft.com/cvrf/v2.0"
 HEADERS = {"Accept": "application/json", "User-Agent": "CyberCaseFiles-Bot/1.0"}
 
-def fetch_latest_patch_tuesday():
+
+def fetch_current_patch_tuesday():
+    now = datetime.now(timezone.utc)
+    period = now.strftime("%Y-%b")  # e.g. "2026-Jul"
+    url = f"{MSRC_BASE}/document/{period}"
     try:
-        resp = requests.get(UPDATES_URL, headers=HEADERS, timeout=30)
+        resp = requests.get(url, headers=HEADERS, timeout=30)
         resp.raise_for_status()
-        data = resp.json()
+        doc = resp.json()
     except Exception as e:
-        print(f"[Patch Tuesday fetch error] {e}")
+        print(f"[MSRC fetch error] {e}")
         return None
 
-    values = data.get("value", [])
-    if not values:
-        return None
-
-    # Most recent release is last in the list
-    latest = values[-1]
-    release_id = latest.get("ID", "")
-    title = latest.get("DocumentTitle", "").strip()
-    if not release_id:
-        return None
-
-    item_id = make_id(release_id, "msrc")
+    item_id = make_id(period, "msrc-patch-tuesday")
     if already_posted(item_id):
-        print(f"[Patch Tuesday] {release_id} already posted this cycle.")
         return None
 
-    cve_count = "Unknown"
-    try:
-        detail_resp = requests.get(DETAIL_URL.format(id=release_id), headers=HEADERS, timeout=30)
-        detail_resp.raise_for_status()
-        detail = detail_resp.json()
-        vulns = detail.get("Vulnerability", [])
-        cve_count = len(vulns)
-    except Exception as e:
-        print(f"[Patch Tuesday detail fetch error] {e}")
+    vulnerabilities = doc.get("Vulnerability", []) or []
+    total_cves = len(vulnerabilities)
+
+    severity_counts = {"Critical": 0, "Important": 0, "Moderate": 0, "Low": 0}
+    for v in vulnerabilities:
+        for threat in v.get("Threats", []):
+            desc = (threat.get("Description", {}) or {}).get("Value", "")
+            if desc in severity_counts:
+                severity_counts[desc] += 1
+
+    exploited = 0
+    for v in vulnerabilities:
+        for threat in v.get("Threats", []):
+            if threat.get("Type") == 1:  # Exploit Status
+                desc = (threat.get("Description", {}) or {}).get("Value", "") or ""
+                if "Exploited:Yes" in desc:
+                    exploited += 1
+                    break
+
+    title = (doc.get("DocumentTitle", {}) or {}).get("Value", f"Security Updates {period}")
+    tracking = doc.get("DocumentTracking", {}) or {}
+    initial_release = (tracking.get("InitialReleaseDate") or "")
 
     return {
         "id": item_id,
-        "release_id": release_id,
-        "title": title or f"Microsoft Security Update Release {release_id}",
-        "cve_count": cve_count,
-        "link": f"https://msrc.microsoft.com/update-guide/releaseNote/{release_id}",
+        "period": period,
+        "title": title,
+        "total_cves": total_cves,
+        "critical": severity_counts["Critical"],
+        "important": severity_counts["Important"],
+        "moderate": severity_counts["Moderate"],
+        "low": severity_counts["Low"],
+        "exploited_in_wild": exploited,
+        "link": "https://msrc.microsoft.com/update-guide/",
+        "freshness": humanize_age(parse_iso(initial_release)),
     }
