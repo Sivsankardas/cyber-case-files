@@ -2,7 +2,7 @@
 Cyber Case Files -- live-only poster.
 
 Usage:
-    python main.py auto          -> (default, used by the 10-min cron) checks
+    python main.py auto          -> (default, used by the 5-min cron) checks
                                      EVERY category and posts whichever ones
                                      are both due (per their pacing interval
                                      below) and have genuinely new content.
@@ -170,9 +170,9 @@ def post_quiz():
     return post_engagement_quiz()
 
 
-# Each category's minimum gap (in minutes) between posts, so a 10-min check
+# Each category's minimum gap (in minutes) between posts, so a 5-min check
 # cycle doesn't flood the channel just because a source always has *something*
-# new. Every category is still CHECKED every 10 min -- this only paces how
+# new. Every category is still CHECKED every 5 min -- this only paces how
 # often a check is allowed to actually publish.
 CATEGORY_CONFIG = {
     "news":          {"fn": post_news_realtime,          "interval_minutes": 5},
@@ -200,10 +200,10 @@ MODES = {
 
 
 def run_auto():
-    """Checked every 10 minutes. Walks every category; for each one that's
+    """Checked every 5 minutes. Walks every category; for each one that's
     past its pacing interval (and, for patch_tuesday, in its date window),
     attempts a fetch+post. Nothing here is ever more than one check-cycle
-    (10 min) away from being picked up once it's due."""
+    (5 min) away from being picked up once it's due."""
     now = dt.datetime.now(dt.timezone.utc)
     total_posted = 0
     for category, cfg in CATEGORY_CONFIG.items():
