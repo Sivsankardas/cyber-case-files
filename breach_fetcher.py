@@ -1,16 +1,17 @@
 """
-Live ransomware/extortion group breach CLAIMS, pulled from ransomware.live's
+Live ransomware/extortion group breach claims, pulled from ransomware.live's
 public API. Tracks what groups themselves post publicly on their leak
 sites -- does not host or distribute leaked data. Claims are unverified
 by definition until the victim organization confirms.
-(Distinct from leaked_creds_fetcher.py, which uses HIBP's list of
-independently-confirmed breaches.)
 """
 import requests
+from urllib.parse import quote
 from storage import make_id, already_posted
+from freshness import parse_iso, humanize_age
 
 API_URL = "https://api.ransomware.live/v2/recentvictims"
 HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0"}
+
 
 def fetch_recent_breach_claim():
     try:
@@ -20,7 +21,6 @@ def fetch_recent_breach_claim():
     except Exception as e:
         print(f"[Breach fetch error] {e}")
         return None
-
     for v in victims:
         victim_name = (v.get("victim") or "").strip()
         group = (v.get("group") or "Unknown").strip()
@@ -30,16 +30,16 @@ def fetch_recent_breach_claim():
         if already_posted(item_id):
             continue
         press = v.get("press") or []
-        import urllib.parse
-        safe_group = urllib.parse.quote(group.lower())
-        link = press[0] if press else f"https://www.ransomware.live/group/{safe_group}"
+        link = press[0] if press else f"https://www.ransomware.live/group/{quote(group.lower())}"
+        observed_raw = v.get("attackdate") or v.get("discovered", "")
         return {
             "id": item_id,
             "victim": victim_name,
             "group": group,
             "country": v.get("country", "N/A"),
             "sector": v.get("sector", "Not disclosed"),
-            "observed": v.get("attackdate", v.get("discovered", "N/A")),
+            "observed": observed_raw or "N/A",
+            "freshness": humanize_age(parse_iso(observed_raw)),
             "link": link,
         }
     return None
