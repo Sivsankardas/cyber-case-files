@@ -1,11 +1,15 @@
 """
 Pulls real, live bug bounty write-ups and disclosed vulnerability research
-from multiple active sources.
+from multiple active sources. Attaches real publish-age from each feed
+entry's own timestamp (same approach as news_fetcher.py).
 """
 import feedparser
 import random
 import re
+from calendar import timegm
+from datetime import datetime, timezone
 from storage import make_id, already_posted
+from freshness import humanize_age
 
 BOUNTY_FEEDS = [
     "https://infosecwriteups.com/feed",
@@ -15,9 +19,18 @@ BOUNTY_FEEDS = [
     "https://portswigger.net/daily-swig/rss",
 ]
 
+
 def _strip_html(text: str) -> str:
     text = re.sub(r"<[^>]+>", "", text or "")
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _entry_datetime(entry):
+    parsed_time = entry.get("published_parsed") or entry.get("updated_parsed")
+    if not parsed_time:
+        return None
+    return datetime.fromtimestamp(timegm(parsed_time), tz=timezone.utc)
+
 
 def fetch_recent_disclosure():
     feeds = BOUNTY_FEEDS[:]
@@ -40,6 +53,12 @@ def fetch_recent_disclosure():
             if already_posted(item_id):
                 continue
             print(f"[Bounty fetch] Found item from {feed_url}: {title}")
-            return {"id": item_id, "title": title, "link": link, "summary": summary}
+            return {
+                "id": item_id,
+                "title": title,
+                "link": link,
+                "summary": summary,
+                "freshness": humanize_age(_entry_datetime(entry)),
+            }
         print(f"[Bounty fetch] No new items in {feed_url} (all posted already or empty).")
     return None
