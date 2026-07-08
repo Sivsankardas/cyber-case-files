@@ -175,14 +175,14 @@ def post_quiz():
 # new. Every category is still CHECKED every 10 min -- this only paces how
 # often a check is allowed to actually publish.
 CATEGORY_CONFIG = {
-    "news":          {"fn": post_news_realtime,          "interval_minutes": 10},
-    "phishing":      {"fn": post_phishing_alert,          "interval_minutes": 20},
-    "cve":           {"fn": post_cve_batch,               "interval_minutes": 30},
-    "breach":        {"fn": post_breach_batch,            "interval_minutes": 30},
-    "leaked_creds":  {"fn": post_leaked_creds,            "interval_minutes": 60},
-    "bounty":        {"fn": post_bounty_batch,            "interval_minutes": 60},
+    "news":          {"fn": post_news_realtime,          "interval_minutes": 5},
+    "phishing":      {"fn": post_phishing_alert,          "interval_minutes": 10},
+    "cve":           {"fn": post_cve_batch,               "interval_minutes": 20},
+    "breach":        {"fn": post_breach_batch,            "interval_minutes": 10},
+    "leaked_creds":  {"fn": post_leaked_creds,            "interval_minutes": 20},
+    "bounty":        {"fn": post_bounty_batch,            "interval_minutes": 10},
     "patch_tuesday": {"fn": post_patch_tuesday,           "interval_minutes": 60, "day_window": (8, 14)},
-    "threat_actor":  {"fn": post_threat_actor_spotlight,  "interval_minutes": 240},
+    "threat_actor":  {"fn": post_threat_actor_spotlight,  "interval_minutes": 20},
     "quiz":          {"fn": post_quiz,                    "interval_minutes": 1440},
 }
 
