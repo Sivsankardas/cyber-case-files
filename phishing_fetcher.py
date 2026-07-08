@@ -1,55 +1,56 @@
 """
-Live phishing/scam alert of the day, from OpenPhish's free community feed
-(no API key required, updated roughly every 15 minutes).
-https://openphish.com/feed.txt
+Live phishing/scam alert fetcher.
+
+Primary source: OpenPhish's free community feed (https://openphish.com/feed.txt),
+a plain-text list of currently active phishing URLs, no API key required.
+
+Note: the free OpenPhish feed gives URLs only (no metadata like target brand),
+so we derive a human-readable "impersonates" guess from the domain itself where
+possible, and are upfront in the post that this is an automated feed entry.
 """
 import requests
-import random
+import re
 from urllib.parse import urlparse
 from storage import make_id, already_posted
+from freshness import humanize_age
 
-FEED_URL = "https://openphish.com/feed.txt"
+OPENPHISH_FEED_URL = "https://openphish.com/feed.txt"
 HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0"}
 
-def _defang(url: str) -> str:
-    """
-    Never post a live, clickable phishing link. Defanging (hxxp / [.]) is
-    the standard threat-intel practice: humans can still read it, but it
-    won't render as a clickable link and can't be copy-pasted into a
-    browser by accident.
-    """
-    defanged = url.replace("https://", "hxxps://").replace("http://", "hxxp://")
-    defanged = defanged.replace(".", "[.]")
-    return defanged
 
-def fetch_phishing_alert():
+def _guess_target(url: str) -> str:
+    host = urlparse(url).netloc.lower()
+    brands = [
+        "paypal", "amazon", "apple", "microsoft", "google", "facebook", "instagram",
+        "netflix", "bankofamerica", "wellsfargo", "chase", "irs", "dhl", "fedex",
+        "usps", "coinbase", "binance", "outlook", "office365", "linkedin", "whatsapp",
+    ]
+    for b in brands:
+        if b in host:
+            return b.capitalize()
+    return "Unknown / unbranded"
+
+
+def fetch_active_phishing_url():
     try:
-        resp = requests.get(FEED_URL, headers=HEADERS, timeout=30)
+        resp = requests.get(OPENPHISH_FEED_URL, headers=HEADERS, timeout=30)
         resp.raise_for_status()
+        lines = [l.strip() for l in resp.text.splitlines() if l.strip().startswith("http")]
     except Exception as e:
-        print(f"[Phishing feed error] {e}")
+        print(f"[Phishing fetch error] {e}")
         return None
 
-    lines = [l.strip() for l in resp.text.splitlines() if l.strip()]
-    if not lines:
-        print("[Phishing fetch] Feed returned no entries.")
-        return None
-
-    random.shuffle(lines)
     for url in lines:
         item_id = make_id(url, "openphish")
         if already_posted(item_id):
             continue
-        try:
-            domain = urlparse(url).netloc or "unknown"
-        except Exception:
-            domain = "unknown"
+        domain = urlparse(url).netloc
         return {
             "id": item_id,
             "url": url,
             "domain": domain,
-            "defanged_url": _defang(url),
-            "source": "OpenPhish",
+            "impersonates": _guess_target(url),
+            "link": url,
+            "freshness": humanize_age(None),  # OpenPhish's free feed doesn't expose a per-URL timestamp
         }
-    print("[Phishing fetch] No new (undeduped) entries right now.")
     return None
