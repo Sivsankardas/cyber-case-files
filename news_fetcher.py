@@ -11,6 +11,7 @@ from sources import RSS_FEEDS
 from storage import make_id, already_posted
 from config import FRESHNESS_WINDOW_MINUTES
 
+
 def _entry_age_minutes(entry) -> float:
     parsed_time = entry.get("published_parsed") or entry.get("updated_parsed")
     if not parsed_time:
@@ -18,6 +19,7 @@ def _entry_age_minutes(entry) -> float:
     published = datetime.fromtimestamp(timegm(parsed_time), tz=timezone.utc)
     age = datetime.now(timezone.utc) - published
     return age.total_seconds() / 60
+
 
 def fetch_fresh_news_item():
     candidates = []
@@ -40,8 +42,12 @@ def fetch_fresh_news_item():
                 continue
             summary = entry.get("summary", "") or entry.get("description", "")
             candidates.append({
-                "id": item_id, "title": title, "link": link,
-                "summary": summary, "source": feed_url, "age_minutes": age,
+                "id": item_id,
+                "title": title,
+                "link": link,
+                "summary": summary,
+                "source": feed_url,
+                "age_minutes": age,
             })
     if not candidates:
         print(f"[News fetch] No items published in the last {FRESHNESS_WINDOW_MINUTES} min.")
