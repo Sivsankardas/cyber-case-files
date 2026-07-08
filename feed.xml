@@ -2,10 +2,34 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Cyber Case Files — Live Threat Intel</title>
-    <link>https://t.me/your_channel_username</link>
+    <link>https://t.me/WH04M1Intel</link>
     <atom:link href="https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/feed.xml" rel="self" type="application/rss+xml" />
     <description>Live CVEs, breach claims, phishing alerts, malware/APT spotlights and more, auto-posted from public sources.</description>
-    <lastBuildDate>Wed, 08 Jul 2026 05:51:18 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 08 Jul 2026 06:08:50 +0000</lastBuildDate>
+    <item>
+      <title>CVE-2026-50043</title>
+      <link>https://nvd.nist.gov/vuln/detail/CVE-2026-50043</link>
+      <guid isPermaLink="false">https://nvd.nist.gov/vuln/detail/CVE-2026-50043</guid>
+      <category>cve</category>
+      <pubDate>Wed, 08 Jul 2026 06:08:50 +0000</pubDate>
+      <description>Improper neutralization of special elements used in an OS command ('OS Command Injection') issue exists in SkyBridge MB-A100/MB-A110. If this vulnerability is exploited, an arbitrary OS command may be executed by an attacker who can log in to the product with an administrative privilege.</description>
+    </item>
+    <item>
+      <title>CVE-2026-11794</title>
+      <link>https://nvd.nist.gov/vuln/detail/CVE-2026-11794</link>
+      <guid isPermaLink="false">https://nvd.nist.gov/vuln/detail/CVE-2026-11794</guid>
+      <category>cve</category>
+      <pubDate>Wed, 08 Jul 2026 06:08:44 +0000</pubDate>
+      <description>The Advanced Form Integration — Connect Forms to 200+ Apps WordPress plugin before 2.1.1 does not restrict the WordPress role assigned when it creates a user from a public form submission, allowing unauthenticated visitors to create an administrator account when an active integration maps the user role to a public form field. This requires a specific, non-default multi-Advanced Form Integration — Connect Forms to 200+ Apps WordPress plugin before 2.1.1 configuration.</description>
+    </item>
+    <item>
+      <title>CVE-2026-12576</title>
+      <link>https://nvd.nist.gov/vuln/detail/CVE-2026-12576</link>
+      <guid isPermaLink="false">https://nvd.nist.gov/vuln/detail/CVE-2026-12576</guid>
+      <category>cve</category>
+      <pubDate>Wed, 08 Jul 2026 06:08:38 +0000</pubDate>
+      <description>DVP80ES3 with Improper Enforcement of Message Integrity During Transmission in a Communication Channel vulnerability.</description>
+    </item>
     <item>
       <title>APT32</title>
       <link>https://attack.mitre.org/groups/G0050</link>
