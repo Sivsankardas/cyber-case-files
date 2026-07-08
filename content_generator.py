@@ -85,3 +85,7 @@ def generate_confirmed_breach_post(item: dict) -> str:
     link = item.get("link", "").strip()
     pwn_count = item.get("pwn_count", 0)
     return f"🔓 {title} breach confirmed — {pwn_count:,} accounts affected – [haveibeenpwned.com]({link})"
+
+
+# Alias for compatibility with main.py's existing import name
+generate_hibp_breach_post = generate_confirmed_breach_post
