@@ -44,8 +44,7 @@ from content_generator import (
     generate_hibp_breach_post,
 )
 from telegram_poster import post_to_telegram
-from storage import mark_posted, add_channel_post, get_last_post_time, set_last_post_time
-from rss_generator import regenerate_feed
+from storage import mark_posted, get_last_post_time, set_last_post_time
 from engagement import post_engagement_quiz
 
 ITEMS_PER_RUN = 3
@@ -54,7 +53,6 @@ DELAY_BETWEEN_POSTS_SECONDS = 5
 
 def _record(item_id, title, link, description, category):
     mark_posted(item_id, title)
-    add_channel_post(item_id, title, link, description, category)
 
 
 def post_news_realtime():
@@ -247,8 +245,7 @@ def run_once():
         print(f"Usage: python main.py [auto|{'|'.join(MODES.keys())}]")
         sys.exit(1)
 
-    if posted_count:
-        regenerate_feed()
+
     print(f"Done. Posted {posted_count} item(s) in '{mode}' mode.")
 
 
