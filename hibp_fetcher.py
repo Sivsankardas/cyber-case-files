@@ -10,7 +10,7 @@ import requests
 from storage import make_id, already_posted
 from freshness import parse_iso, humanize_age
 
-HIBP_BREACHES_URL = "https://haveibeenpwned.com/api/v3/breaches"
+HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0"}
 HEADERS = {"User-Agent": "CyberCaseFiles-Bot/1.0"}
 
 
