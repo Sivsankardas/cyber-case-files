@@ -67,7 +67,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add posted_history.db feed.xml
+          git add posted_history.db
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
