@@ -183,12 +183,12 @@ def post_quiz():
 
 CATEGORY_CONFIG = {
     "news":    {"func": post_news_realtime,       "gap_minutes": 5},
-    "phishing":{"func": post_phishing_single,     "gap_minutes": 10},
+    "phishing":{"func": post_phishing_single,     "gap_minutes": 15},
     "breach":  {"func": post_breach_batch,        "gap_minutes": 10},
-    "bounty":  {"func": post_bounty_batch,        "gap_minutes": 10},
+    "bounty":  {"func": post_bounty_batch,        "gap_minutes": 30},
     "cve":     {"func": post_cve_batch,           "gap_minutes": 20},
-    "hibp":    {"func": post_hibp_single,         "gap_minutes": 20},
-    "threat":  {"func": post_threat_actor_single, "gap_minutes": 20},
+    "hibp":    {"func": post_hibp_single,         "gap_minutes": 40},
+    "threat":  {"func": post_threat_actor_single, "gap_minutes": 35},
     "patch": {
         "func": post_patch_tuesday_single,
         "gap_minutes": 60,
@@ -209,23 +209,65 @@ def _category_due(name: str, cfg: dict, now: datetime.datetime) -> bool:
     return elapsed_minutes >= cfg["gap_minutes"]
 
 
+# Categories in this set are checked EVERY run exactly like before -- no
+# staggering, no change in behavior. Everything else is staggered (see
+# post_auto below) so the channel doesn't get flooded with several
+# categories posting back-to-back in the same 5-minute cycle.
+ALWAYS_CHECK_CATEGORIES = {"news", "breach"}
+
+
 def post_auto():
     """
-    Auto mode: called every 5 minutes by cron. Checks EVERY category in
-    CATEGORY_CONFIG every single run. A category only actually posts if
-    it's "due" -- i.e. either it's never posted before, or at least
-    gap_minutes have passed since it last posted successfully. Categories
-    that aren't due, or whose source has nothing new, are silently skipped
-    and re-checked on the next 5-minute run.
+    Auto mode: called every 5 minutes by cron.
+
+    - "news" and "breach" are checked every run, unchanged -- if due, they
+      post immediately, same as always.
+    - All OTHER categories (cve, phishing, bounty, hibp, threat, patch,
+      quiz) are staggered: on any given run, only the SINGLE most-overdue
+      one among them is allowed to post, even if several are technically
+      "due" at once. This prevents the flood of 4-5 categories dumping
+      messages into the channel within seconds of each other. Whichever
+      ones don't get picked this run simply get picked up next cycle --
+      nothing is lost, it's just spread out over time.
     """
     now = datetime.datetime.now(timezone.utc)
     total_posted = 0
 
-    for name, cfg in CATEGORY_CONFIG.items():
+    # --- Always-check categories: unchanged behavior ---
+    for name in ALWAYS_CHECK_CATEGORIES:
+        cfg = CATEGORY_CONFIG[name]
         if not _category_due(name, cfg, now):
             continue
 
         print(f"[auto] Checking category '{name}'...")
+        posted = cfg["func"]()
+
+        if posted:
+            set_last_post_time(name, now)
+            total_posted += posted
+        else:
+            print(f"[auto] Nothing new for '{name}' this run.")
+
+    # --- Staggered categories: only the most-overdue one posts this run ---
+    due_others = []
+    for name, cfg in CATEGORY_CONFIG.items():
+        if name in ALWAYS_CHECK_CATEGORIES:
+            continue
+        if not _category_due(name, cfg, now):
+            continue
+
+        last = get_last_post_time(name)
+        # Never-posted categories are treated as "most overdue" of all.
+        overdue_minutes = float("inf") if last is None else (now - last).total_seconds() / 60
+        due_others.append((overdue_minutes, name, cfg))
+
+    if due_others:
+        # Pick whichever due category has waited the longest since it last posted.
+        due_others.sort(key=lambda t: t[0], reverse=True)
+        _, name, cfg = due_others[0]
+
+        print(f"[auto] Staggered slot this run: '{name}' "
+              f"(others due but deferred: {[n for _, n, _ in due_others[1:]]})")
         posted = cfg["func"]()
 
         if posted:
