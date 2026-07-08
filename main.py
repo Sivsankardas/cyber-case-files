@@ -1,10 +1,10 @@
 """
-Cyber Case Files -- live-only poster with images.
+Cyber Case Files -- live-only poster (text only, no images).
 
 Usage:
     python main.py auto      -> real-time news most runs, plus one scheduled
                                  category per day at its designated UTC hour
-    python main.py news      -> real-time: posts ONE news item (image + text)
+    python main.py news      -> real-time: posts ONE news item
     python main.py cve       -> posts 3 live CVE alerts
     python main.py bounty    -> posts 3 live bug bounty disclosures
     python main.py breach    -> posts 3 live claimed breach disclosures
@@ -36,9 +36,8 @@ from content_generator import (
     generate_patch_tuesday_post,
     generate_confirmed_breach_post,
 )
-from telegram_poster import send_post
+from telegram_poster import post_to_telegram
 from storage import mark_posted
-from image_helper import resolve_image
 
 ITEMS_PER_RUN = 3
 DELAY_BETWEEN_POSTS_SECONDS = 5
@@ -50,8 +49,7 @@ def post_news_realtime():
         print("No live/fresh news right now -- skipping this run.")
         return 0
     mark_posted(item["id"], item["title"])
-    image = resolve_image(url=item.get("link"))
-    send_post(generate_news_flash_post(item), image_url=image)
+    post_to_telegram(generate_news_flash_post(item))
     print(f"✅ Posted live news: {item['title']} ({item['age_minutes']:.1f} min old)")
     return 1
 
@@ -66,7 +64,7 @@ def post_cve_batch(count=ITEMS_PER_RUN):
             print("No more fresh CVEs available right now.")
             break
         mark_posted(cve["id"], cve["cve_id"])
-        send_post(generate_cve_alert_post(cve))
+        post_to_telegram(generate_cve_alert_post(cve))
         posted += 1
         print(f"✅ Posted CVE {posted}/{count}: {cve['cve_id']}")
         if posted < count:
@@ -84,8 +82,7 @@ def post_bounty_batch(count=ITEMS_PER_RUN):
             print("No more fresh bug bounty disclosures available right now.")
             break
         mark_posted(report["id"], report["title"])
-        image = resolve_image(url=report.get("link"))
-        send_post(generate_bounty_disclosure_post(report), image_url=image)
+        post_to_telegram(generate_bounty_disclosure_post(report))
         posted += 1
         print(f"✅ Posted bounty disclosure {posted}/{count}: {report['title']}")
         if posted < count:
@@ -103,8 +100,7 @@ def post_breach_batch(count=ITEMS_PER_RUN):
             print("No more fresh breach claims available right now.")
             break
         mark_posted(item["id"], item["victim"])
-        image = resolve_image(url=item.get("link"))
-        send_post(generate_breach_claim_post(item), image_url=image)
+        post_to_telegram(generate_breach_claim_post(item))
         posted += 1
         print(f"✅ Posted breach claim {posted}/{count}: {item['victim']}")
         if posted < count:
@@ -118,7 +114,7 @@ def post_phishing_single():
         print("No new active phishing alerts available right now.")
         return 0
     mark_posted(item["id"], item["domain"])
-    send_post(generate_phishing_alert_post(item))
+    post_to_telegram(generate_phishing_alert_post(item))
     print(f"✅ Posted phishing alert: {item['domain']}")
     return 1
 
@@ -129,7 +125,7 @@ def post_threat_actor_single():
         print("No new threat actor spotlight available right now.")
         return 0
     mark_posted(item["id"], item["name"])
-    send_post(generate_threat_actor_post(item))
+    post_to_telegram(generate_threat_actor_post(item))
     print(f"✅ Posted threat actor spotlight: {item['name']}")
     return 1
 
@@ -140,7 +136,7 @@ def post_patch_tuesday_single():
         print("No new Patch Tuesday summary to post right now.")
         return 0
     mark_posted(item["id"], item["title"])
-    send_post(generate_patch_tuesday_post(item))
+    post_to_telegram(generate_patch_tuesday_post(item))
     print(f"✅ Posted Patch Tuesday summary: {item['title']}")
     return 1
 
@@ -151,7 +147,7 @@ def post_hibp_single():
         print("No new confirmed breach available right now.")
         return 0
     mark_posted(item["id"], item["title"])
-    send_post(generate_confirmed_breach_post(item))
+    post_to_telegram(generate_confirmed_breach_post(item))
     print(f"✅ Posted confirmed breach: {item['title']}")
     return 1
 
@@ -193,13 +189,33 @@ MODES = {
     "auto": post_auto,
 }
 
+# Aliases so slightly different mode names in the workflow file still work
+MODE_ALIASES = {
+    "threat_actor": "threat",
+    "threatactor": "threat",
+    "patch_tuesday": "patch",
+    "patchtuesday": "patch",
+    "hibp_breach": "hibp",
+    "confirmed_breach": "hibp",
+    "breach_claim": "breach",
+    "phish": "phishing",
+    "bug_bounty": "bounty",
+    "bugbounty": "bounty",
+}
+
 
 def run_once():
-    if len(sys.argv) < 2 or sys.argv[1] not in MODES:
+    if len(sys.argv) < 2:
         print(f"Usage: python main.py [{'|'.join(MODES.keys())}]")
         sys.exit(1)
 
     mode = sys.argv[1]
+    mode = MODE_ALIASES.get(mode, mode)  # normalize alias -> real mode name
+
+    if mode not in MODES:
+        print(f"Usage: python main.py [{'|'.join(MODES.keys())}]")
+        sys.exit(1)
+
     print(f"[{datetime.datetime.now()}] Running mode: {mode}")
     posted_count = MODES[mode]()
     print(f"Done. Posted {posted_count} item(s) in '{mode}' mode.")
