@@ -59,6 +59,8 @@ jobs:
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
           OTX_API_KEY: ${{ secrets.OTX_API_KEY }}
+          CHANNEL_HANDLE: ${{ secrets.CHANNEL_HANDLE }}
+          BRAND_TAG: ${{ secrets.BRAND_TAG }}
         run: python main.py ${{ steps.mode.outputs.mode }}
 
       - name: Commit updated history + feed
