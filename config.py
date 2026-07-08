@@ -34,6 +34,9 @@ RSS_SELF_URL = os.environ.get("RSS_SELF_URL", "https://raw.githubusercontent.com
 RSS_MAX_ITEMS = 100
 
 # --- Brand ---
-CHANNEL_HANDLE = "@WH04M1Intel"
-BRAND_TAG = "TEAM WH04M1"
-HASHTAGS = "#CyberSecurity #CyberCrime #InfoSec #StaySafeOnline"
+CHANNEL_HANDLE = os.environ.get("CHANNEL_HANDLE", "@your_channel_username")
+BRAND_TAG = os.environ.get("BRAND_TAG", "Cyber Case Files")
+HASHTAGS = os.environ.get(
+    "HASHTAGS",
+    "#CyberSecurity #CyberCrime #InfoSec #StaySafeOnline"
+)
