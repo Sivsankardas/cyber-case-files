@@ -30,13 +30,11 @@ def post_to_telegram(text: str):
     """Plain text post, Markdown with automatic plain-text fallback."""
     if len(text) > 4090:
         text = text[:4080] + "\n…(trimmed)"
-
     resp = _send_message(text, "Markdown")
     if resp.status_code != 200:
         print(f"[Telegram Markdown error] {resp.status_code}: {resp.text}")
         plain_text = text.replace("*", "").replace("_", "").replace("`", "")
         resp = _send_message(plain_text, None)
-
     if resp.status_code != 200:
         print(f"[Telegram plain-text error] {resp.status_code}: {resp.text}")
     resp.raise_for_status()
@@ -59,5 +57,26 @@ def send_post(text: str, image_url: str = None):
                 print(f"[Telegram photo error] {photo_resp.status_code}: {photo_resp.text}")
         except Exception as e:
             print(f"[Telegram photo send failed] {e}")
-
     return post_to_telegram(text)
+
+
+def send_poll(question: str, options: list, correct_option_id: int, is_anonymous: bool = True):
+    """
+    Posts a Telegram quiz-style poll (type='quiz'), which shows a correct
+    answer and auto-explains once someone votes. Telegram limits: question
+    <= 300 chars, each option <= 100 chars, 2-10 options per poll.
+    """
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPoll"
+    payload = {
+        "chat_id": TELEGRAM_CHANNEL_ID,
+        "question": question[:300],
+        "options": [str(opt)[:100] for opt in options],
+        "type": "quiz",
+        "correct_option_id": correct_option_id,
+        "is_anonymous": is_anonymous,
+    }
+    resp = requests.post(url, json=payload, timeout=30)
+    if resp.status_code != 200:
+        print(f"[Telegram poll error] {resp.status_code}: {resp.text}")
+    resp.raise_for_status()
+    return resp.json()
