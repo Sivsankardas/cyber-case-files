@@ -2,6 +2,8 @@
 Cyber Case Files -- live-only poster with images.
 
 Usage:
+    python main.py auto      -> real-time news most runs, plus one scheduled
+                                 category per day at its designated UTC hour
     python main.py news      -> real-time: posts ONE news item (image + text)
     python main.py cve       -> posts 3 live CVE alerts
     python main.py bounty    -> posts 3 live bug bounty disclosures
@@ -14,6 +16,7 @@ Usage:
 import sys
 import time
 import datetime
+from datetime import timezone
 
 from news_fetcher import fetch_fresh_news_item
 from cve_fetcher import fetch_recent_cve
@@ -153,6 +156,31 @@ def post_hibp_single():
     return 1
 
 
+def post_auto():
+    """
+    Auto mode: runs real-time news most of the time, and fires one of the
+    scheduled sources once per day during the first 10 minutes of its
+    designated UTC hour. Safe to call from a single recurring cron entry.
+    """
+    now = datetime.datetime.now(timezone.utc)
+
+    hourly_modes = {
+        5: post_cve_batch,
+        8: post_phishing_single,
+        9: post_bounty_batch,
+        10: post_patch_tuesday_single,
+        11: post_threat_actor_single,
+        12: post_breach_batch,
+        14: post_hibp_single,
+        15: post_cve_batch,
+    }
+
+    if now.minute < 10 and now.hour in hourly_modes:
+        return hourly_modes[now.hour]()
+
+    return post_news_realtime()
+
+
 MODES = {
     "news": post_news_realtime,
     "cve": post_cve_batch,
@@ -162,6 +190,7 @@ MODES = {
     "threat": post_threat_actor_single,
     "patch": post_patch_tuesday_single,
     "hibp": post_hibp_single,
+    "auto": post_auto,
 }
 
 
