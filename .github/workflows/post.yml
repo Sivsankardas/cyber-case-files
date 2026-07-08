@@ -2,11 +2,11 @@ name: Cyber Case Files - Auto Post
 
 on:
   schedule:
-    - cron: '*/10 * * * *'   # single trigger: checks EVERY category every 10 min
+    - cron: '*/5 * * * *'    # checks EVERY category every 5 min
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Mode to run manually (auto = normal 10-min behavior, right now)'
+        description: 'Mode to run manually (auto = normal 5-min behavior, right now)'
         required: true
         default: 'auto'
         type: choice
