@@ -1,31 +1,34 @@
 import sqlite3
 import hashlib
+from datetime import datetime, timezone
 from config import DB_PATH
 
+
 def _connect():
-    # A short busy_timeout means concurrent GH Actions runners waiting on
-    # the sqlite file (rare, since we now serialize via concurrency: in
-    # the workflow) fail fast instead of hanging.
-    conn = sqlite3.connect(DB_PATH, timeout=10)
+    conn = sqlite3.connect(DB_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS posted (
             id TEXT PRIMARY KEY,
             title TEXT,
-            link TEXT,
-            summary TEXT,
             posted_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    # Migration for DBs created before link/summary existed.
-    existing_cols = {row[1] for row in conn.execute("PRAGMA table_info(posted)")}
-    if "link" not in existing_cols:
-        conn.execute("ALTER TABLE posted ADD COLUMN link TEXT")
-    if "summary" not in existing_cols:
-        conn.execute("ALTER TABLE posted ADD COLUMN summary TEXT")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS channel_posts (
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            link TEXT,
+            description TEXT,
+            category TEXT,
+            pub_date TEXT
+        )
+    """)
     return conn
+
 
 def make_id(title: str, source: str = "") -> str:
     return hashlib.sha256(f"{title}|{source}".encode("utf-8")).hexdigest()
+
 
 def already_posted(item_id: str) -> bool:
     conn = _connect()
@@ -34,27 +37,67 @@ def already_posted(item_id: str) -> bool:
     conn.close()
     return result
 
-def mark_posted(item_id: str, title: str, link: str = "", summary: str = ""):
+
+def mark_posted(item_id: str, title: str):
+    conn = _connect()
+    conn.execute("INSERT OR IGNORE INTO posted (id, title) VALUES (?, ?)", (item_id, title))
+    conn.commit()
+    conn.close()
+
+
+def add_channel_post(item_id: str, title: str, link: str, description: str, category: str):
+    """Record a post so it can be re-published in our own RSS feed (feed.xml)."""
     conn = _connect()
     conn.execute(
-        "INSERT OR IGNORE INTO posted (id, title, link, summary) VALUES (?, ?, ?, ?)",
-        (item_id, title, link, summary),
+        "INSERT OR IGNORE INTO channel_posts (id, title, link, description, category, pub_date) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (item_id, title, link, description, category, datetime.now(timezone.utc).isoformat()),
     )
     conn.commit()
     conn.close()
 
-def recent_posts(limit: int = 60):
-    """Used by rss_generator.py to build the public feed."""
+
+def get_last_post_time(category: str):
+    """Last time this category actually posted something (not just checked)."""
+    conn = _connect()
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS category_state (category TEXT PRIMARY KEY, last_posted_at TEXT)"
+    )
+    cur = conn.execute("SELECT last_posted_at FROM category_state WHERE category = ?", (category,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    try:
+        return datetime.fromisoformat(row[0])
+    except Exception:
+        return None
+
+
+def set_last_post_time(category: str, dt: datetime):
+    conn = _connect()
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS category_state (category TEXT PRIMARY KEY, last_posted_at TEXT)"
+    )
+    conn.execute(
+        "INSERT INTO category_state (category, last_posted_at) VALUES (?, ?) "
+        "ON CONFLICT(category) DO UPDATE SET last_posted_at = excluded.last_posted_at",
+        (category, dt.isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_recent_channel_posts(limit: int = 100):
     conn = _connect()
     cur = conn.execute(
-        "SELECT id, title, link, summary, posted_at FROM posted "
-        "WHERE link IS NOT NULL AND link != '' "
-        "ORDER BY posted_at DESC LIMIT ?",
+        "SELECT title, link, description, category, pub_date FROM channel_posts "
+        "ORDER BY pub_date DESC LIMIT ?",
         (limit,),
     )
     rows = cur.fetchall()
     conn.close()
     return [
-        {"id": r[0], "title": r[1], "link": r[2], "summary": r[3] or "", "posted_at": r[4]}
+        {"title": r[0], "link": r[1], "description": r[2], "category": r[3], "pub_date": r[4]}
         for r in rows
     ]
