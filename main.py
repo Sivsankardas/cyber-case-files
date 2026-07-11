@@ -183,16 +183,19 @@ def post_quiz():
 # ---------------------------------------------------------------------------
 
 CATEGORY_CONFIG = {
+    # --- LIVE: checked + eligible to post every single 5-min run ---
     "news":    {"func": post_news_realtime,       "gap_minutes": 5},
-    "phishing":{"func": post_phishing_single,     "gap_minutes": 15},
     "breach":  {"func": post_breach_batch,        "gap_minutes": 10},
-    "bounty":  {"func": post_bounty_batch,        "gap_minutes": 30},
-    "cve":     {"func": post_cve_batch,           "gap_minutes": 20},
-    "hibp":    {"func": post_hibp_single,         "gap_minutes": 40},
-    "threat":  {"func": post_threat_actor_single, "gap_minutes": 35},
+    "hibp":    {"func": post_hibp_single,         "gap_minutes": 10},
+
+    # --- STAGGERED: spread out, one of these posts per run at most ---
+    "phishing":{"func": post_phishing_single,     "gap_minutes": 60},
+    "bounty":  {"func": post_bounty_batch,        "gap_minutes": 90},
+    "cve":     {"func": post_cve_batch,           "gap_minutes": 60},
+    "threat":  {"func": post_threat_actor_single, "gap_minutes": 90},
     "patch": {
         "func": post_patch_tuesday_single,
-        "gap_minutes": 60,
+        "gap_minutes": 120,
         "day_check": lambda now: 8 <= now.day <= 14,
     },
     "quiz":    {"func": post_quiz,                "gap_minutes": 24 * 60},
@@ -210,42 +213,43 @@ def _category_due(name: str, cfg: dict, now: datetime.datetime) -> bool:
     return elapsed_minutes >= cfg["gap_minutes"]
 
 
+# These are checked and allowed to post EVERY run -- true live behavior,
+# no waiting in line behind other categories.
+LIVE_CATEGORIES = {"news", "breach", "hibp"}
+
+
 def post_auto():
     """
     Auto mode: called every 5 minutes by cron.
 
-    Every category is checked every single run, exactly like "news" and
-    "breach" always were. There's no staggering and no "only one
-    non-news category per run" limit any more -- if a category is due
-    (its own gap_minutes has elapsed since it last actually posted, and
-    its day_check, if any, passes) AND its source has something genuinely
-    new, it posts, in the same 5-minute cycle as everything else that's
-    due.
+    - LIVE_CATEGORIES ("news", "breach", "hibp"): checked every run, and if
+      due (per their own short gap_minutes) with something new, they post
+      immediately -- same cycle, no waiting.
 
-    Pacing is now controlled entirely by each category's gap_minutes in
-    CATEGORY_CONFIG -- e.g. cve waits 20 min between posts, quiz waits 24
-    hours -- not by only letting one category through per cron run. If
-    several categories are due in the same cycle, they all post, one
-    after another (each mode function already paces its own multi-item
-    batches with DELAY_BETWEEN_POSTS_SECONDS).
+    - Everything else (phishing, bounty, cve, threat, patch, quiz): these
+      are the "which time users post on their own" categories -- rather
+      than checking and posting all of them back-to-back in one run, only
+      ONE of them is allowed to post per cron run. Candidates are tried in
+      order of most-overdue first; if the top candidate has nothing new,
+      we fall through to the next-most-overdue one instead of giving up
+      for the run (this avoids a quiet/empty source permanently blocking
+      everyone behind it -- see prior bug notes on this).
     """
     now = datetime.datetime.now(timezone.utc)
     total_posted = 0
     any_posted_yet = False
 
-    for name, cfg in CATEGORY_CONFIG.items():
+    # --- Live categories: checked and can post every run ---
+    for name in LIVE_CATEGORIES:
+        cfg = CATEGORY_CONFIG[name]
         if not _category_due(name, cfg, now):
             continue
 
-        # If a previous category in this same run already posted, wait a
-        # bit before checking/posting the next one -- otherwise, whenever
-        # several categories happen to become due in the same 5-min cycle,
-        # they'd all fire back-to-back within seconds of each other.
         if any_posted_yet:
             print(f"[auto] Waiting {DELAY_BETWEEN_CATEGORIES_SECONDS}s before next category...")
             time.sleep(DELAY_BETWEEN_CATEGORIES_SECONDS)
 
-        print(f"[auto] Checking category '{name}'...")
+        print(f"[auto] Checking live category '{name}'...")
         posted = cfg["func"]()
 
         if posted:
@@ -254,6 +258,41 @@ def post_auto():
             any_posted_yet = True
         else:
             print(f"[auto] Nothing new for '{name}' this run.")
+
+    # --- Staggered categories: only one posts per run ---
+    due_others = []
+    for name, cfg in CATEGORY_CONFIG.items():
+        if name in LIVE_CATEGORIES:
+            continue
+        if not _category_due(name, cfg, now):
+            continue
+
+        last = get_last_post_time(name)
+        overdue_minutes = float("inf") if last is None else (now - last).total_seconds() / 60
+        due_others.append((overdue_minutes, name, cfg))
+
+    if due_others:
+        due_others.sort(key=lambda t: t[0], reverse=True)
+        deferred = [n for _, n, _ in due_others]
+
+        for _, name, cfg in due_others:
+            deferred.remove(name)
+
+            if any_posted_yet:
+                print(f"[auto] Waiting {DELAY_BETWEEN_CATEGORIES_SECONDS}s before next category...")
+                time.sleep(DELAY_BETWEEN_CATEGORIES_SECONDS)
+
+            print(f"[auto] Staggered slot attempt: '{name}' "
+                  f"(remaining candidates this run: {deferred})")
+            posted = cfg["func"]()
+
+            if posted:
+                set_last_post_time(name, now)
+                total_posted += posted
+                any_posted_yet = True
+                break
+            else:
+                print(f"[auto] Nothing new for '{name}' this run -- trying next candidate.")
 
     if total_posted == 0:
         print("[auto] Nothing posted this cycle across any category.")
